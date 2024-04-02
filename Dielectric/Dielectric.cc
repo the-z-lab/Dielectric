@@ -3,8 +3,8 @@
 #pragma warning( disable : 4244 )
 #endif
 
-#include "Dielectric2.h"
-#include "Dielectric2.cuh"
+#include "Dielectric.h"
+#include "Dielectric.cuh"
 #include "PotentialWrapper.cuh"
 #include <stdio.h>
 #include <algorithm>
@@ -15,8 +15,8 @@
 
 using namespace std;
 
-// Constructor for the Dielectric2 class
-Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system this method will act on; must not be NULL
+// Constructor for the Dielectric class
+Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this method will act on; must not be NULL
 			  std::shared_ptr<ParticleGroup> group, // group of particles for which to compute the force
 			  std::shared_ptr<NeighborList> nlist, // neighbor list
 			  std::vector<float> &conductivity, // particle conductivities
@@ -38,13 +38,13 @@ Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system th
 			  m_dipoleflag(dipoleflag),
 			  m_t0(t0)
 {
-    m_exec_conf->msg->notice(5) << "Constructing Dielectric2" << std::endl;
+    m_exec_conf->msg->notice(5) << "Constructing Dielectric" << std::endl;
 
 	// only one GPU is supported
 	if (!m_exec_conf->isCUDAEnabled())
 	{
-		m_exec_conf->msg->error() << "Creating a Dielectric2 when CUDA is disabled" << std::endl;
-		throw std::runtime_error("Error initializing Dielectric2");
+		m_exec_conf->msg->error() << "Creating a Dielectric when CUDA is disabled" << std::endl;
+		throw std::runtime_error("Error initializing Dielectric");
 	}
 
 	// Set the field and field gradient
@@ -65,16 +65,16 @@ Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system th
 
 }
 
-// Destructor for the Dielectric2 class
-Dielectric2::~Dielectric2() {
+// Destructor for the Dielectric class
+Dielectric::~Dielectric() {
 
-    m_exec_conf->msg->notice(5) << "Destroying Dielectric2" << std::endl;
+    m_exec_conf->msg->notice(5) << "Destroying Dielectric" << std::endl;
 	cufftDestroy(m_plan);
 }
 
 // Compute and set parameters needed for the calculations.  This step is computed only once when the
-// Dielectric2 class is created or on each call to update_parameters if system parameters change.
-void Dielectric2::SetParams() {
+// Dielectric class is created or on each call to update_parameters if system parameters change.
+void Dielectric::SetParams() {
 
 	////// Compute parameters associated with the numerical method.
 
@@ -187,7 +187,7 @@ void Dielectric2::SetParams() {
 	m_gridk.swap(n_gridk);
 	ArrayHandle<Scalar3> h_gridk(m_gridk, access_location::host, access_mode::readwrite);
 
-	// Initialize arrays for the Wave space scalings
+	// Initialize arrays for the wave space scalings
 	GPUArray<Scalar> n_scale_phiq(Ngrid, m_exec_conf);
 	GPUArray<Scalar> n_scale_phiS(Ngrid, m_exec_conf);
 	GPUArray<Scalar> n_scale_ES(Ngrid, m_exec_conf);
@@ -501,7 +501,7 @@ void Dielectric2::SetParams() {
 }
 
 // Update the applied external field and gradient.  Does not require recomputing tables on the CPU.
-void Dielectric2::UpdateField(std::vector<float> &field,
+void Dielectric::UpdateField(std::vector<float> &field,
 			     std::vector<float> &gradient)
 {
 
@@ -531,7 +531,7 @@ void Dielectric2::UpdateField(std::vector<float> &field,
 }
 
 // Update simulation parameters.  Recomputes tables on the CPU.
-void Dielectric2::UpdateParameters(std::vector<float> &field,
+void Dielectric::UpdateParameters(std::vector<float> &field,
 				   std::vector<float> &gradient,
 		      		   std::vector<float> &conductivity,
 		      		   std::string fileprefix,
@@ -574,7 +574,7 @@ void Dielectric2::UpdateParameters(std::vector<float> &field,
 
 
 // Compute forces on particles
-void Dielectric2::computeForces(unsigned int timestep) {
+void Dielectric::computeForces(unsigned int timestep) {
 
 	// access the particle forces (associated with this plugin only; other forces are stored elsewhere)
 	ArrayHandle<Scalar4> d_force(m_force, access_location::device, access_mode::overwrite);
@@ -680,7 +680,7 @@ void Dielectric2::computeForces(unsigned int timestep) {
 }
 
 // Write quantities to file
-void Dielectric2::OutputData(unsigned int timestep) {
+void Dielectric::OutputData(unsigned int timestep) {
 
 	// Format the timestep to a string
 	std::ostringstream timestep_str;
@@ -702,7 +702,7 @@ void Dielectric2::OutputData(unsigned int timestep) {
 
 	// Check that the file opened correctly
         if (!file.good()) {
-                throw std::runtime_error("Error in Dielectric2: unable to open output file.");
+                throw std::runtime_error("Error in Dielectric: unable to open output file.");
         }
 
 	////// Write the particle positions to file in global tag order
@@ -764,15 +764,15 @@ void Dielectric2::OutputData(unsigned int timestep) {
 	file.close();
 }
 
-void export_Dielectric2(pybind11::module& m)
+void export_Dielectric(pybind11::module& m)
 {
-    pybind11::class_<Dielectric2, std::shared_ptr<Dielectric2>> (m, "Dielectric2", pybind11::base<ForceCompute>())
+    pybind11::class_<Dielectric, std::shared_ptr<Dielectric>> (m, "Dielectric", pybind11::base<ForceCompute>())
 		.def(pybind11::init< std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>, std::shared_ptr<NeighborList>, std::vector<float>&, std::vector<float>&, std::vector<float>&, Scalar, Scalar, std::string, int, int, unsigned int >())
-		.def("SetParams", &Dielectric2::SetParams)
-		.def("UpdateField", &Dielectric2::UpdateField)
-		.def("UpdateParameters", &Dielectric2::UpdateParameters)
-		.def("computeForces", &Dielectric2::computeForces)
-		.def("OutputData", &Dielectric2::OutputData)
+		.def("SetParams", &Dielectric::SetParams)
+		.def("UpdateField", &Dielectric::UpdateField)
+		.def("UpdateParameters", &Dielectric::UpdateParameters)
+		.def("computeForces", &Dielectric::computeForces)
+		.def("OutputData", &Dielectric::OutputData)
         ;
 }
 

@@ -1,14 +1,14 @@
 # Maintainer: Zachary M. Sherman
 
-set(COMPONENT_NAME Dielectric2)
+set(COMPONENT_NAME Dielectric)
 
 set(_${COMPONENT_NAME}_sources
     module.cc
-    Dielectric2.cc
+    Dielectric.cc
     )
 
 set(_${COMPONENT_NAME}_cu_sources
-    Dielectric2.cu
+    Dielectric.cu
     )
 
 if (ENABLE_CUDA)
@@ -21,6 +21,15 @@ set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "@loader_path/
 else()
 set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
 endif()
+
+# Find additional libraries to be linked for the plugin
+find_library( AMGXSH_LIBRARY libamgxsh.so)
+if( NOT AMGXSH_LIBRARY )
+        message(FATAL_ERROR "amgxsh library not found")
+endif( NOT AMGXSH_LIBRARY )
+message(STATUS  "Found amgxsh library: ${AMGXSH_LIBRARY}")
+
+set( AMGX_LIBRARIES ${AMGXSH_LIBRARY} )
 
 # link the library to its dependencies
 target_link_libraries(_${COMPONENT_NAME} PRIVATE ${HOOMD_LIBRARIES})

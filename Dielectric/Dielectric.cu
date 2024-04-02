@@ -3,7 +3,7 @@
 #include "cusp/krylov/gmres.h"
 
 #include <stdio.h>
-#include "Dielectric2.cuh"
+#include "Dielectric.cuh"
 #include "PotentialWrapper.cuh"
 #include "hoomd/TextureTools.h"
 
@@ -32,12 +32,12 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 #define PI 3.1415926535897932f
 
 // Declare textured memory
-scalar2_tex_t phiS_table_tex;
-scalar4_tex_t ES_table_tex;
-scalar2_tex_t gradphiq_table_tex;
-scalar4_tex_t gradphiS_table_tex;
-scalar4_tex_t gradES_table_tex;
-scalar4_tex_t pos_tex;
+texture<Scalar2, 1, cudaReadModeElementType> phiS_table_tex;
+texture<Scalar4, 1, cudaReadModeElementType> ES_table_tex;
+texture<Scalar2, 1, cudaReadModeElementType> gradphiq_table_tex;
+texture<Scalar4, 1, cudaReadModeElementType> gradphiS_table_tex;
+texture<Scalar4, 1, cudaReadModeElementType> gradES_table_tex;
+texture<Scalar4, 1, cudaReadModeElementType> pos_tex;
 
 // Zero particle forces
 __global__ void zeroforce(unsigned int Ntotal, // total number of particles
@@ -148,7 +148,7 @@ __global__ void spread_charge( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -243,7 +243,7 @@ __global__ void spread_dipole( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -341,7 +341,7 @@ __global__ void spread( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -579,7 +579,7 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	output[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -683,7 +683,7 @@ __global__ void contract_force_charge(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	force[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -801,7 +801,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	force[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 tpos = __lgd(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -915,7 +915,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 postypei = __lgd(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -933,7 +933,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = texFetchScalar4(d_pos, pos_tex, neigh_idx);
+				Scalar4 postypej = __lgd(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -952,7 +952,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 					
 					// Read the table values closest to the current distance
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );	
-					Scalar2 entry = texFetchScalar2(d_phiS_table, phiS_table_tex, tableind);
+					Scalar2 entry = __lgd(d_phiS_table+tableind);
 
 					// Linearly interpolate between the table values
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
@@ -1018,7 +1018,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 postypei = __lgd(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1036,7 +1036,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = texFetchScalar4(d_pos, pos_tex, neigh_idx);
+				Scalar4 postypej = __lgd(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1057,7 +1057,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 					Scalar Sjdotr = Sj.x*r.x + Sj.y*r.y + Sj.z*r.z;
 
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );	
-					Scalar4 entry = texFetchScalar4(d_ES_table, ES_table_tex, tableind);
+					Scalar4 entry = __lgd(d_ES_table+tableind);
 
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
 					Scalar C1 = entry.x + ( entry.z - entry.x )*lininterp;
@@ -1117,7 +1117,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 postypei = __lgd(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1135,7 +1135,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = texFetchScalar4(d_pos, pos_tex, neigh_idx);
+				Scalar4 postypej = __lgd(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1154,7 +1154,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 	
 					// Find the entries in the real space tables between which to interpolate
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );
-					Scalar2 gradphiq_entry = texFetchScalar2(d_gradphiq_table, gradphiq_table_tex, tableind);	
+					Scalar2 gradphiq_entry = __lgd(d_gradphiq_table+tableind);	
 
 					// Interpolate between the values in the tables
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
@@ -1224,7 +1224,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = texFetchScalar4(d_pos, pos_tex, idx);
+		Scalar4 postypei = __lgd(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1242,7 +1242,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = texFetchScalar4(d_pos, pos_tex, neigh_idx);
+				Scalar4 postypej = __lgd(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1267,9 +1267,9 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 	
 					// Find the entries in the real space tables between which to interpolate
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );
-					Scalar2 gradphiq_entry = texFetchScalar2(d_gradphiq_table, gradphiq_table_tex, tableind);	
-					Scalar4 gradphiS_entry = texFetchScalar4(d_gradphiS_table, gradphiS_table_tex, tableind);
-					Scalar4 gradES_entry = texFetchScalar4(d_gradES_table, gradES_table_tex, tableind);
+					Scalar2 gradphiq_entry = __lgd(d_gradphiq_table+tableind);	
+					Scalar4 gradphiS_entry = __lgd(d_gradphiS_table+tableind);
+					Scalar4 gradES_entry = __lgd(d_gradES_table+tableind);
 
 					// Interpolate between the values in the tables
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
@@ -1507,7 +1507,7 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 	FieldChargeMultiply(d_pos, d_group_membership, d_group_members, group_size, box, block_size, d_charge, d_Eq, extfield, xi, eta, rc, drtable, Ntable, d_phiS_table, d_gridk, d_scale_phiS, d_qgrid, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh); 
 
 	// Create the matrix-free potential linear operator
-	cuspPotential M(d_pos, d_group_membership, d_group_members, group_size, box, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
+	cuspPotential M(d_pos, d_group_membership, d_group_members, group_size, box, block_size, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
 
 	// Allocate storage for the solution (S) and right side (rhs) on the GPU
 	cusp::array1d<float, cusp::device_memory> S(M.num_rows, 0);
@@ -1526,24 +1526,14 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 
 	// Solve the linear system M_ES * S = E0 - M_Eq * q using GMRES
 	cusp::default_monitor<float> monitor(rhs, 100, errortol);
-	//cusp::krylov::cg(M, m, H, monitor);
 	int restart = 10;
 	cusp::krylov::gmres(M, S, rhs, restart, monitor);
 
 	// Store the computed dipoles to the correct place in device memory
 	cudaMemcpy(d_dipole, d_S, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
 
-	// Print iteration number
-	//if (monitor.converged())
-        //{
-        //    std::cout << "Solver converged after " << monitor.iteration_count() << " iterations." << std::endl;
-        //}
-        //else
-        //{
-        //    std::cout << "Solver reached iteration limit " << monitor.iteration_limit() << " before converging." << std::endl;
-        //}
-
-    	return cudaSuccess;
+    gpuErrchk(cudaPeekAtLastError());
+    return cudaSuccess;
 }
 
 cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
@@ -1695,56 +1685,6 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 	// Compute the real space contribution to the force
     	real_space_force<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_dipole, d_force, extfield, gradient, group_size, d_gradphiq_table, d_gradphiS_table, d_gradES_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
 
-    	gpuErrchk(cudaPeekAtLastError());
-
-	// Copy results to host (2 particles)
-	//float4 *h_pos = (float4 *)malloc(2*sizeof(float4));
-	//float *h_charge = (float *)malloc(2*sizeof(float));
-	//float3 *h_dipole = (float3 *)malloc(2*sizeof(float3));
-	//float4 *h_force = (float4 *)malloc(2*sizeof(float4));
-	//cudaMemcpy(h_pos, d_pos, 2*sizeof(float4), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_charge, d_charge, 2*sizeof(float), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_dipole, d_dipole, 2*sizeof(float3), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_force, d_force, 2*sizeof(float4), cudaMemcpyDeviceToHost);
-
-	// Copy results to host (4 particles)
-	//float4 *h_pos = (float4 *)malloc(4*sizeof(float4));
-	//float *h_charge = (float *)malloc(4*sizeof(float));
-	//float3 *h_dipole = (float3 *)malloc(4*sizeof(float3));
-	//float4 *h_force = (float4 *)malloc(4*sizeof(float4));
-	//cudaMemcpy(h_pos, d_pos, 4*sizeof(float4), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_charge, d_charge, 4*sizeof(float), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_dipole, d_dipole, 4*sizeof(float3), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_force, d_force, 4*sizeof(float4), cudaMemcpyDeviceToHost);
-
-	// Copy results to host (1 particle)
-	//float4 *h_pos = (float4 *)malloc(sizeof(float4));
-	//float *h_charge = (float *)malloc(sizeof(float));
-	//float3 *h_dipole = (float3 *)malloc(sizeof(float3));
-	//float4 *h_force = (float4 *)malloc(sizeof(float4));
-	//cudaMemcpy(h_pos, d_pos, sizeof(float4), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_charge, d_charge, sizeof(float), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_dipole, d_dipole, sizeof(float3), cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_force, d_force, sizeof(float4), cudaMemcpyDeviceToHost);
-
-	// Display results (2 particles)
-	//printf("Position: (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f)\n", h_pos[0].x, h_pos[0].y, h_pos[0].z, h_pos[1].x, h_pos[1].y, h_pos[1].z);
-	//printf("Charge: %.1f, %.1f\n", h_charge[0], h_charge[1]);
-	//printf("Dipole: (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f)\n", h_dipole[0].x, h_dipole[0].y, h_dipole[0].z, h_dipole[1].x, h_dipole[1].y, h_dipole[1].z);
-	//printf("Force: (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f)\n\n", h_force[0].x, h_force[0].y, h_force[0].z, h_force[1].x, h_force[1].y, h_force[1].z);
-
-	// Display results (4 particles)
-	//printf("Position: (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f)\n", h_pos[0].x, h_pos[0].y, h_pos[0].z, h_pos[1].x, h_pos[1].y, h_pos[1].z, h_pos[2].x, h_pos[2].y, h_pos[2].z, h_pos[3].x, h_pos[3].y, h_pos[3].z);
-	//printf("Charge: %.3f, %.3f, %.3f, %.3f\n", h_charge[0], h_charge[1], h_charge[2], h_charge[3]);
-	//printf("Dipole: (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f)\n", h_dipole[0].x, h_dipole[0].y, h_dipole[0].z, h_dipole[1].x, h_dipole[1].y, h_dipole[1].z, h_dipole[2].x, h_dipole[2].y, h_dipole[2].z, h_dipole[3].x, h_dipole[3].y, h_dipole[3].z);
-	//printf("Force: (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f), (%.6f, %.6f, %.6f)\n\n", h_force[0].x, h_force[0].y, h_force[0].z, h_force[1].x, h_force[1].y, h_force[1].z, h_force[2].x, h_force[2].y, h_force[2].z, h_force[3].x, h_force[3].y, h_force[3].z);
-
-	// Free host memory
-	//free(h_pos);
-	//free(h_charge);
-	//free(h_dipole);
-	//free(h_force);
-
 	cudaUnbindTexture(phiS_table_tex);
 	cudaUnbindTexture(ES_table_tex);
 	cudaUnbindTexture(gradphiq_table_tex);
@@ -1752,7 +1692,8 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
     	cudaUnbindTexture(gradES_table_tex);
     	cudaUnbindTexture(pos_tex);
 
-    	return cudaSuccess;
+    gpuErrchk(cudaPeekAtLastError());
+    return cudaSuccess;
 }
 
 cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
@@ -1843,10 +1784,9 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
 	// Compute the real space contribution to the force
     	real_space_force_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_force, extfield, group_size, d_gradphiq_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
 
-    	gpuErrchk(cudaPeekAtLastError());
-
 	cudaUnbindTexture(phiS_table_tex);
     	cudaUnbindTexture(pos_tex);
 
-    	return cudaSuccess;
+    gpuErrchk(cudaPeekAtLastError());
+    return cudaSuccess;
 }

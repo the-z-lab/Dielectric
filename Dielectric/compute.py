@@ -1,12 +1,12 @@
-# This simple python interface activates the c++ Dielectric2
+# This simple python interface activates the c++ Dielectric
 
 import math
 import numpy as np
 
 # Import the C++ module.
-from hoomd.Dielectric2 import _Dielectric2
+from hoomd.Dielectric import _Dielectric
 
-# Dielectric2 extends a ForceCompute, so we need to bring in the base class
+# Dielectric extends a ForceCompute, so we need to bring in the base class
 # force and some other parts from hoomd
 import hoomd
 import hoomd.md
@@ -15,11 +15,17 @@ from hoomd.md import _md
 from hoomd.md import force
 from hoomd.md.force import _force
 
-# The Dielectric2 class.  Computes the forces on each charged dielectric
-# particle in an external field with a small, constant gradient.
-class Dielectric2(_force):
+# The Dielectric class.  Computes the dipole moments and forces on charged and polarizable
+# dielectric particles in an external field with a small, constant gradient.
+# The gradient is only used to impart dielectro-/magnetophoric forces, while the dipolar
+# interactions amoung particles are computed with a constant field.
+# The calculations take into account mutual polarization among the particles. 
+# Dipoles can be turned off so that only Coulomb interactions are present. (dipoleflag = 2)
+# Mutual polarization can be turned off so that each particle is polarized only by
+# the external field. (dipoleflag = 1)
+class Dielectric(_force):
 
-    # Initialize the Dielectric2 force
+    # Initialize the Dielectric force
     def __init__(self, group, conductivity, field = [0., 0., 0.], gradient = [0., 0., 0.], xi = 0.5, errortol = 1e-3,
 		 fileprefix = "", period = 0, dipoleflag = 0):
 
@@ -38,20 +44,20 @@ class Dielectric2(_force):
         # initialize the reflected c++ class
         if not hoomd.context.exec_conf.isCUDAEnabled():
             hoomd.context.msg.error("Sorry, we have not written CPU code for dielectric calculations. \n");
-            raise RuntimeError('Error creating Dielectric2');
+            raise RuntimeError('Error creating Dielectric');
         else:
             # Create a new neighbor list
-            cl_Dielectric2 = _hoomd.CellListGPU(hoomd.context.current.system_definition);
-            hoomd.context.current.system.addCompute(cl_Dielectric2, "Dielectric2_cl");
-            self.neighbor_list = _md.NeighborListGPUBinned(hoomd.context.current.system_definition, self.rcut, 0.4, cl_Dielectric2);
+            cl_Dielectric = _hoomd.CellListGPU(hoomd.context.current.system_definition);
+            hoomd.context.current.system.addCompute(cl_Dielectric, "Dielectric_cl");
+            self.neighbor_list = _md.NeighborListGPUBinned(hoomd.context.current.system_definition, self.rcut, 0.4, cl_Dielectric);
             self.neighbor_list.setEvery(1, True);
-            hoomd.context.current.system.addCompute(self.neighbor_list, "Dielectric2_nlist");
+            hoomd.context.current.system.addCompute(self.neighbor_list, "Dielectric_nlist");
             self.neighbor_list.countExclusions();
 
             # Add the new force to the system
-            self.cpp_force = _Dielectric2.Dielectric2(hoomd.context.current.system_definition, group.cpp_group,
-                                                      self.neighbor_list, conductivity, field, gradient, xi, errortol, fileprefix,
-                                                      period, dipoleflag, hoomd.context.current.system.getCurrentTimeStep());
+            self.cpp_force = _Dielectric.Dielectric(hoomd.context.current.system_definition, group.cpp_group,
+                                                    self.neighbor_list, conductivity, field, gradient, xi, errortol, fileprefix,
+                                                    period, dipoleflag, hoomd.context.current.system.getCurrentTimeStep());
             hoomd.context.current.system.addCompute(self.cpp_force,self.force_name);
 
         # Set parameters for the force calculations

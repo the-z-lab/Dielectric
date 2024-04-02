@@ -1,6 +1,5 @@
-#include "Dielectric2.cuh"
+#include "Dielectric.cuh"
 #include <stdio.h>
-
 #include <cusp/linear_operator.h>
 
 #ifdef WIN32
@@ -38,6 +37,7 @@ public:
     Scalar3 gridh;  // grid spacing
     int P;  // number of grid nodes in Gaussian support
     cufftHandle plan;  // plan for cuFFT
+    int block_size;  // number of threads to use per block
  
     Scalar4 *d_pos;  // particle positions and types
     Scalar *d_conductivity; // particle conductivity
@@ -61,6 +61,7 @@ public:
 		  unsigned int *d_group_members,
 		  unsigned int group_size,
 		  const BoxDim& box,
+          int block_size,
 		  Scalar *d_conductivity,
 		  Scalar xi,
                   Scalar3 eta,
@@ -88,6 +89,7 @@ public:
 		  d_group_members(d_group_members),
     		  group_size(group_size),
 		  box(box),
+          block_size(block_size),
 		  d_conductivity(d_conductivity),
 		  xi(xi),
                   eta(eta),
@@ -133,7 +135,7 @@ public:
 			d_group_members,
 			group_size,
 			box,
-			512, // blocksize
+			block_size,
 			x_ptr2,
 			d_conductivity,
 			y_ptr2,

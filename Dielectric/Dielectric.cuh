@@ -3,8 +3,8 @@
 #include "hoomd/Index1D.h"
 #include <cufft.h>
 
-#ifndef __DIELECTRIC2_CUH__
-#define __DIELECTRIC2_CUH__
+#ifndef __DIELECTRIC_CUH__
+#define __DIELECTRIC_CUH__
 
 #ifdef SINGLE_PRECISION
 #define CUFFTCOMPLEX cufftComplex
@@ -12,7 +12,7 @@
 #define CUFFTCOMPLEX cufftComplex
 #endif
 
-// Kernel driver for the calculations called by Dielectric2.cc
+// Kernel driver for the calculations called by Dielectric.cc
 cudaError_t gpu_ZeroForce(unsigned int Ntotal, // total number of particles
 			  Scalar4 *d_force, // pointer to the particle forces 
 			  unsigned int block_size); // number of threads per block
