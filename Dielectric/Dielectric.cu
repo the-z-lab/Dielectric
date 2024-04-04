@@ -148,7 +148,7 @@ __global__ void spread_charge( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -243,7 +243,7 @@ __global__ void spread_dipole( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -341,7 +341,7 @@ __global__ void spread( Scalar4 *d_pos, // particle positions
 	// Have the first thread fetch the particle position and store it in shared memory
 	if (thread_offset == 0) {
 
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -579,7 +579,7 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	output[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -683,7 +683,7 @@ __global__ void contract_force_charge(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	force[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -801,7 +801,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	force[thread_offset] = make_scalar3(0.0,0.0,0.0);
 	if (thread_offset == 0){
-		Scalar4 tpos = __lgd(d_pos+idx);
+		Scalar4 tpos = __ldg(d_pos+idx);
 		pos_shared[0].x = tpos.x;
 		pos_shared[0].y = tpos.y;
 		pos_shared[0].z = tpos.z;
@@ -915,7 +915,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = __lgd(d_pos+idx);
+		Scalar4 postypei = __ldg(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -933,7 +933,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = __lgd(d_pos+neigh_idx);
+				Scalar4 postypej = __ldg(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -952,7 +952,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 					
 					// Read the table values closest to the current distance
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );	
-					Scalar2 entry = __lgd(d_phiS_table+tableind);
+					Scalar2 entry = __ldg(d_phiS_table+tableind);
 
 					// Linearly interpolate between the table values
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
@@ -1018,7 +1018,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = __lgd(d_pos+idx);
+		Scalar4 postypei = __ldg(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1036,7 +1036,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = __lgd(d_pos+neigh_idx);
+				Scalar4 postypej = __ldg(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1057,7 +1057,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 					Scalar Sjdotr = Sj.x*r.x + Sj.y*r.y + Sj.z*r.z;
 
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );	
-					Scalar4 entry = __lgd(d_ES_table+tableind);
+					Scalar4 entry = __ldg(d_ES_table+tableind);
 
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
 					Scalar C1 = entry.x + ( entry.z - entry.x )*lininterp;
@@ -1117,7 +1117,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = __lgd(d_pos+idx);
+		Scalar4 postypei = __ldg(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1135,7 +1135,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = __lgd(d_pos+neigh_idx);
+				Scalar4 postypej = __ldg(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1154,7 +1154,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 	
 					// Find the entries in the real space tables between which to interpolate
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );
-					Scalar2 gradphiq_entry = __lgd(d_gradphiq_table+tableind);	
+					Scalar2 gradphiq_entry = __ldg(d_gradphiq_table+tableind);	
 
 					// Interpolate between the values in the tables
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
@@ -1224,7 +1224,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 		unsigned int head_i = d_head_list[idx];
 
 		// Current particle position and type
-		Scalar4 postypei = __lgd(d_pos+idx);
+		Scalar4 postypei = __ldg(d_pos+idx);
 		Scalar3 posi = make_scalar3(postypei.x, postypei.y, postypei.z);
 
 		// Minimum and maximum distances squared for pair calculation
@@ -1242,7 +1242,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			if ( neigh_group_idx != -1 ) {
 
 				// Position and type of neighbor particle
-				Scalar4 postypej = __lgd(d_pos+neigh_idx);
+				Scalar4 postypej = __ldg(d_pos+neigh_idx);
 				Scalar3 posj = make_scalar3(postypej.x, postypej.y, postypej.z);
 
 				// Distance vector between current particle and neighbor
@@ -1267,9 +1267,9 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 	
 					// Find the entries in the real space tables between which to interpolate
 					int tableind = __scalar2int_rd( Ntable * (dist-drtable)/(rc-drtable) );
-					Scalar2 gradphiq_entry = __lgd(d_gradphiq_table+tableind);	
-					Scalar4 gradphiS_entry = __lgd(d_gradphiS_table+tableind);
-					Scalar4 gradES_entry = __lgd(d_gradES_table+tableind);
+					Scalar2 gradphiq_entry = __ldg(d_gradphiq_table+tableind);	
+					Scalar4 gradphiS_entry = __ldg(d_gradphiS_table+tableind);
+					Scalar4 gradES_entry = __ldg(d_gradES_table+tableind);
 
 					// Interpolate between the values in the tables
 					Scalar lininterp = dist/drtable - tableind - Scalar(1.0);
