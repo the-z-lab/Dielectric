@@ -20,7 +20,8 @@ z_m = 1 # valence of negative charges
 t_rand = 10 # randomization time
 t_eq = 10  # equilibration time
 t_run = 100  # run time
-N_image = 100  # number of output files 
+N_image = 100  # number of output snapshots in gsd file 
+N_txt = 10 # number of output txt files
 error = 1e-3  # desired error tolerance
 xi = 0.5  # Ewald splitting parameter
 
@@ -64,6 +65,7 @@ N_rand = int(np.round(t_rand/dt))
 N_eq = int(np.round(t_eq/dt))
 N_run = int(np.round(t_run/dt))
 N_imageperiod = int(np.round(N_run/N_image)) 
+N_txtperiod = int(np.round(N_run/N_txt)) 
 
 # Parameters for initializing system on a simple cubic lattice
 m = int(np.ceil(N**(1./3.)))  # smallest latticle dimension that can hold all of the particles
@@ -116,7 +118,7 @@ run(N_rand)
 # dipoleflag = 1: constant dipole; sets each dipole to the isolated particle dipole
 # dipoleflag = 2: charge only; ignores dipolar interactions
 dielectric = hoomd.Dielectric.compute.Dielectric(group=all, conductivity=[lambda_p]*N, field=[0.0, 0.0, field], gradient=[gradient, 0.0, 0.0],
-                                                   xi=xi, errortol=error, fileprefix=fileprefix, period=N_imageperiod, dipoleflag=2)
+                                                   xi=xi, errortol=error, fileprefix=fileprefix, period=N_txtperiod, dipoleflag=2)
 
 
 # Equilibrate

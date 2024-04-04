@@ -21,7 +21,8 @@ z_m = 1 # valence of negative charges
 t_rand = 10 # randomization time
 t_eq = 10  # equilibration time
 t_run = 100  # run time
-N_image = 100  # number of output files 
+N_image = 100  # number of output snapshots in gsd file
+N_txt = 10 # number of output txt files 
 error = 1e-3  # desired error tolerance
 xi = 0.5  # Ewald splitting parameter
 
@@ -65,6 +66,7 @@ N_rand = int(np.round(t_rand/dt))
 N_eq = int(np.round(t_eq/dt))
 N_run = int(np.round(t_run/dt))
 N_imageperiod = int(np.round(N_run/N_image)) 
+N_txtperiod = int(np.round(N_run/N_txt)) 
 
 # Parameters for initializing system on a simple cubic lattice
 m = int(np.ceil(N**(1./3.)))  # smallest latticle dimension that can hold all of the particles
@@ -87,13 +89,7 @@ for p in system.particles:
     p.type = type[p.tag]
     p.charge = charge[p.tag]
 
-# In the Heyes-Melrose algorithm, hard sphere interactions takes on the form of a Hookean spring with a time step dependent spring constant.
-def hs_potential_BD(r,rmin,rmax,k,req):
-    V = k/2.*(r - req)**2.
-    F = -k*(r - req) 
-    return (V, F)
-
-# Hard sphere potential takes a different form when HI are included
+# In the Heyes-Melrose algorithm, hard sphere interactions takes on the form of this potential when HI are included
 def hs_potential_HI(r, rmin, rmax, dt, a):
     V = 8.*a/(3.*dt)*(2.*a*np.log(2.*a/r) + (r - 2.*a))
     F = 8.*a/(3.*dt*r)*(2.*a - r)
@@ -102,47 +98,26 @@ def hs_potential_HI(r, rmin, rmax, dt, a):
 # Initialize the neighbor list
 nl = hoomd.md.nlist.cell()
 
-# Create an interpolation table for the BD hard sphere interactions
-table_hs_BD = hoomd.md.pair.table(width=1000, nlist=nl)
-table_hs_BD.pair_coeff.set('pos','pos',func=hs_potential_BD,rmin=0.,rmax=diameter,coeff=dict(k=1./(2.*dt),req=diameter))
-table_hs_BD.pair_coeff.set('pos','neg',func=hs_potential_BD,rmin=0.,rmax=diameter,coeff=dict(k=1./(2.*dt),req=diameter))
-table_hs_BD.pair_coeff.set('neg','neg',func=hs_potential_BD,rmin=0.,rmax=diameter,coeff=dict(k=1./(2.*dt),req=diameter))
-
 # Create an interpolation table for the HI hard sphere interactions
 table_hs_HI = hoomd.md.pair.table(width=1000, nlist=nl)
 table_hs_HI.pair_coeff.set('pos','pos',func=hs_potential_HI,rmin=0.001,rmax=diameter,coeff=dict(dt=dt,a=radius))
 table_hs_HI.pair_coeff.set('pos','neg',func=hs_potential_HI,rmin=0.001,rmax=diameter,coeff=dict(dt=dt,a=radius))
 table_hs_HI.pair_coeff.set('neg','neg',func=hs_potential_HI,rmin=0.001,rmax=diameter,coeff=dict(dt=dt,a=radius))
 
-# Establish Brownian dynamics integrator.
+# Establish HI integrator.
 all = group.all()
 hoomd.md.integrate.mode_standard(dt=dt)
-bd = hoomd.md.integrate.brownian(group=all, kT=T, seed=datetime.now().microsecond)
-bd.set_gamma('pos', gamma=gamma)
-bd.set_gamma('neg', gamma=gamma)
-
-# Thermalize with only steric repulsions
-table_hs_HI.disable()
-run(N_rand)
-
-# Delete the BD integrator and BD hard sphere potential
-table_hs_BD.disable()
-bd.disable()
-del bd
-
-# Establish HI integrator
 S = hoomd.PSEv1.integrate.PSEv1(group=all, seed=datetime.now().microsecond, T=T, xi=xi, error=error)
 
-# Enable the HI hard sphere interactions
-table_hs_HI.enable()
+# Thermalize with only steric repulsions
+run(N_rand)
 
 # Turn on the electrostatic interactions.
 # dipoleflag = 0: default settings; solves for the induced dipoles
 # dipoleflag = 1: constant dipole; sets each dipole to the isolated particle dipole
 # dipoleflag = 2: charge only; ignores dipolar interactions
 dielectric = hoomd.Dielectric2.compute.Dielectric2(group=all, conductivity=[lambda_p]*N, field=[0.0, 0.0, field], gradient=[gradient, 0.0, 0.0],
-                                                   xi=xi, errortol=error, fileprefix=fileprefix, period=Nimageperiod, dipoleflag=2)
-
+                                                   xi=xi, errortol=error, fileprefix=fileprefix, period=N_txtperiod, dipoleflag=2)
 
 # Equilibrate
 run(N_eq)
