@@ -1,7 +1,7 @@
 from hoomd import *
 import hoomd
 import hoomd.md
-import hoomd.Dielectric2
+import hoomd.Dielectric
 
 import numpy as np
 from datetime import datetime
