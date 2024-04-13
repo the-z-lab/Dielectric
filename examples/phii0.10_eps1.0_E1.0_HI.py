@@ -49,8 +49,8 @@ type = (['pos']*z_m + ['neg']*z_p)*Nsalt
 
 # Randomize the particle order
 ind = np.random.permutation(N)
-charge = charge[ind]
-type = type[ind]
+charge = np.array(charge)[ind]
+type = np.array(type)[ind]
 
 # Typical nondimensionalization
 mass = dt  # particle mass; this ensures overdamped dynamics if a two step integrator is used
