@@ -116,7 +116,7 @@ run(N_rand)
 # dipoleflag = 0: default settings; solves for the induced dipoles
 # dipoleflag = 1: constant dipole; sets each dipole to the isolated particle dipole
 # dipoleflag = 2: charge only; ignores dipolar interactions
-dielectric = hoomd.Dielectric2.compute.Dielectric2(group=all, conductivity=[lambda_p]*N, field=[0.0, 0.0, field], gradient=[gradient, 0.0, 0.0],
+dielectric = hoomd.Dielectric.compute.Dielectric(group=all, conductivity=[lambda_p]*N, field=[0.0, 0.0, field], gradient=[gradient, 0.0, 0.0],
                                                    xi=xi, errortol=error, fileprefix=fileprefix, period=N_txtperiod, dipoleflag=2)
 
 # Equilibrate
