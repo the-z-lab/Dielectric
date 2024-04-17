@@ -27,7 +27,7 @@ error = 1e-3  # desired error tolerance
 xi = 0.5  # Ewald splitting parameter
 
 # Construct the output file name
-fileprefix = 'N{}_phii{:.2f}_eps{:.1f}_E{:.2f}'.format(N, phi, eps, E_0)
+fileprefix = 'N{}_phii{:.2f}_eps{:.1f}_E{:.2f}'.format(N, phi, strength, E_0)
 
 # Adjust parameters according to the temperature.  This ensures that all energies are scaled by kT,
 # even if kT is not zero in the simulation.
