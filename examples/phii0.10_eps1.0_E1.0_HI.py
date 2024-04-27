@@ -48,7 +48,7 @@ charge = ([z_p*q]*z_m + [-z_m*q]*z_p)*Nsalt
 type = (['pos']*z_m + ['neg']*z_p)*Nsalt
 
 # Randomize the particle order
-ind = np.random.permutation(N)
+ind = np.random.permutation(N).astype(int)
 charge = np.array(charge)[ind]
 type = np.array(type)[ind]
 
