@@ -163,7 +163,7 @@ void Dielectric::SetParams() {
 	// Print summary to command line output
 	printf("\n");
 	printf("\n");
-	m_exec_conf->msg->notice(2) << "--- Parameters ---" << std::endl;
+	m_exec_conf->msg->notice(2) << "--- ?????? Parameters ---" << std::endl;
 	m_exec_conf->msg->notice(2) << "Active group size: " << m_group_size << std::endl;
 	m_exec_conf->msg->notice(2) << "Box dimensions: " << L.x << ", " << L.y << ", " << L.z << std::endl;
 	m_exec_conf->msg->notice(2) << "Ewald parameter xi: " << m_xi << std::endl;
@@ -496,6 +496,7 @@ void Dielectric::SetParams() {
 
 		// Fill the dipole array with the isolated particle (constant dipole model) dipole
 		h_dipole.data[ii] = 4.0*PI*beta*m_field;
+		printf("Initializing group memebership: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
 	}
 
 }
@@ -508,6 +509,8 @@ void Dielectric::UpdateField(std::vector<float> &field,
 	// Set the new field and field gradient
 	m_field = make_scalar3(field[0], field[1], field[2]);
 	m_gradient = make_scalar3(gradient[0], gradient[1], gradient[2]);
+	printf("Update Field: m_field = (%f, %f, %f)\n", m_field.x, m_field.y, m_field.z);
+	printf("Update Field: m_gradient = (%f, %f, %f)\n", m_gradient.x, m_gradient.y, m_gradient.z);
 	
 	// Get access to the particle conductivity and dipole arrays
 	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
@@ -527,6 +530,7 @@ void Dielectric::UpdateField(std::vector<float> &field,
 
 		// Fill the dipole array with the new isolated particle (constant dipole model) dipole
 		h_dipole.data[ii] = 4.0*PI*beta*m_field;
+		printf("Updata Field: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
 	}
 }
 
@@ -547,6 +551,8 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 	m_period = period;
 	m_dipoleflag = dipoleflag,
 	m_t0 = t0;
+	printf("Update Parameter: m_field = (%f, %f, %f)\n", m_field.x, m_field.y, m_field.z);
+	printf("Update Parameter: m_gradient = (%f, %f, %f)\n", m_gradient.x, m_gradient.y, m_gradient.z);
 
 	// Get access to particle conductivity and dipole arrays
 	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::readwrite);
@@ -569,6 +575,7 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 
 		// Fill the dipole array with the new isolated particle (constant dipole model) dipole
 		h_dipole.data[i] = 4.0*PI*beta*m_field;
+		printf("Update Parameter: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
 	}
 }
 
@@ -732,11 +739,13 @@ void Dielectric::OutputData(unsigned int timestep) {
 
 		// Get the particle's active group-specific index
 		int group_idx = h_group_membership.data[idx];
+		printf("OutputData [Dipole]: i = %d,  idx = %d, group idx = h_group_membership.data[idx] = %d \n", i, idx, group_idx);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
 		Scalar3 dipole;
 		if (group_idx != -1) {
 			dipole = h_dipole.data[group_idx];
+			printf("OutputData [Dipole] : group_idx = %d, dipole = (%f, %f, %f)\n", group_idx, dipole.x, dipole.y, dipole.z);
 		} else {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
