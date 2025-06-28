@@ -1137,7 +1137,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 		// Get the reciprocal contribution to the force
   		Scalar4 F4 = d_force[idx];
 		Scalar3 F = make_scalar3(F4.x, F4.y, F4.z);
-		printf("real space force charge: idx = %d, F4 = d_force[idx] = (%f, %f, %f) \n", idx, F4.x, F4.y, Fy.z);
+		printf("real space force charge: idx = %d, F4 = d_force[idx] = (%f, %f, %f) \n", idx, F4.x, F4.y, F4.z);
 
 		// Charge and dipole of current particle
 		Scalar qi = d_charge[group_idx];
@@ -1248,7 +1248,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 		// Get the reciprocal contribution to the force
   		Scalar4 F4 = d_force[idx];
 		Scalar3 F = make_scalar3(F4.x, F4.y, F4.z);
-		printf("real space force: idx = %d, F4 = d_force[idx] = (%f, %f, %f) \n", idx, F4.x, F4.y, Fy.z);
+		printf("real space force: idx = %d, F4 = d_force[idx] = (%f, %f, %f) \n", idx, F4.x, F4.y, F4.z);
 
 		// Charge and dipole of current particle
 		Scalar qi = d_charge[group_idx];
@@ -1307,7 +1307,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 					// Charge and dipole of neighbor particle
 					Scalar qj = d_charge[neigh_group_idx];
 					Scalar3 Sj = d_dipole[neigh_group_idx];
-					printf("real space force: neigh_group_idx = %d, qj = d_charge[neigh_group_idx] = %d \n", neigh_group_idx, qj);
+					printf("real space force: neigh_group_idx = %d, qj = d_charge[neigh_group_idx] = %f \n", neigh_group_idx, qj);
 					printf("real space force: neigh_group_idx = %d, Sj = d_dipole[neigh_group_idx] = (%f, %f, %f) \n", neigh_group_idx, Sj.x Sj.y, Sj.z);
 
 					// Dot products of the two dipoles
