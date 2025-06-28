@@ -496,7 +496,7 @@ void Dielectric::SetParams() {
 
 		// Fill the dipole array with the isolated particle (constant dipole model) dipole
 		h_dipole.data[ii] = 4.0*PI*beta*m_field;
-		printf("Initializing group memebership: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
+		printf("Initializing group memebership: ii = %d, h_dipole.data[ii] = (%f, %f, %f) \n", ii, h_dipole.data[ii].x, h_dipole.data[ii].y, h_dipole.data[ii].z);
 	}
 
 }
@@ -530,7 +530,7 @@ void Dielectric::UpdateField(std::vector<float> &field,
 
 		// Fill the dipole array with the new isolated particle (constant dipole model) dipole
 		h_dipole.data[ii] = 4.0*PI*beta*m_field;
-		printf("Updata Field: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
+		printf("Updata Field: ii = %d, h_dipole.data[ii] = (%f, %f, %f) \n", ii, h_dipole.data[ii].x, h_dipole.data[ii].y, h_dipole.data[ii].z);
 	}
 }
 
@@ -575,7 +575,7 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 
 		// Fill the dipole array with the new isolated particle (constant dipole model) dipole
 		h_dipole.data[i] = 4.0*PI*beta*m_field;
-		printf("Update Parameter: i = %d, h_dipole.data[i] = %f \n", i, h_dipole.data[i]);
+		printf("Update Parameter: i = %d, h_dipole.data[i] = (%f, %f, %f) \n", i, h_dipole.data[i].x, h_dipole.data[i].y, h_dipole.data[i].z);
 	}
 }
 
