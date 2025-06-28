@@ -1308,7 +1308,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 					Scalar qj = d_charge[neigh_group_idx];
 					Scalar3 Sj = d_dipole[neigh_group_idx];
 					printf("real space force: neigh_group_idx = %d, qj = d_charge[neigh_group_idx] = %f \n", neigh_group_idx, qj);
-					printf("real space force: neigh_group_idx = %d, Sj = d_dipole[neigh_group_idx] = (%f, %f, %f) \n", neigh_group_idx, Sj.x Sj.y, Sj.z);
+					printf("real space force: neigh_group_idx = %d, Sj = d_dipole[neigh_group_idx] = (%f, %f, %f) \n", neigh_group_idx, Sj.x, Sj.y, Sj.z);
 
 					// Dot products of the two dipoles
 					Scalar SidotSj = Si.x*Sj.x + Si.y*Sj.y + Si.z*Sj.z;
