@@ -575,7 +575,7 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 
 		// Fill the dipole array with the new isolated particle (constant dipole model) dipole
 		h_dipole.data[i] = 4.0*PI*beta*m_field;
-		printf("Update Parameter: ii = %d, h_dipole.data[ii] = %f \n", ii, h_dipole.data[ii]);
+		printf("Update Parameter: i = %d, h_dipole.data[i] = %f \n", i, h_dipole.data[i]);
 	}
 }
 
