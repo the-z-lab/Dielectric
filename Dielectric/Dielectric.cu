@@ -92,7 +92,7 @@ __global__ void initialize_groupmembership( int *d_group_membership, // particle
 	// Flag every particle as not a member of the active group of interest
 	if (idx < Ntotal) {
 		d_group_membership[idx] = -1;
-		printf("Initialize group_membership: idx = %d, d_group_membership[idx] = %d \n", idx, d_group_membership[idx]);
+		//printf("Initialize group_membership: idx = %d, d_group_membership[idx] = %d \n", idx, d_group_membership[idx]);
 	}
 }
 
@@ -115,7 +115,7 @@ __global__ void groupmembership( int *d_group_membership, // particle membership
 		// Set the group-specific index at the current particle's global index position in the group membership list
 		d_group_membership[idx] = group_idx;
 
-		printf("group_membership: group_idx = %d, d_group_members[group_idx] = %d; idx = %d, d_group_membership[idx] = %d \n", group_idx, d_group_members[group_idx], idx, d_group_membership[idx]);
+		//printf("group_membership: group_idx = %d, d_group_members[group_idx] = %d; idx = %d, d_group_membership[idx] = %d \n", group_idx, d_group_members[group_idx], idx, d_group_membership[idx]);
 	}
 
 }
