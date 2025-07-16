@@ -92,7 +92,7 @@ __global__ void initialize_groupmembership( int *d_group_membership, // particle
 	// Flag every particle as not a member of the active group of interest
 	if (idx < Ntotal) {
 		d_group_membership[idx] = -1;
-		printf("Initialize group_membership: idx = %d, d_group_membership[idx] = %d \n", idx, d_group_membership[idx]);
+		//printf("Initialize group_membership: idx = %d, d_group_membership[idx] = %d \n", idx, d_group_membership[idx]);
 	}
 }
 
@@ -115,7 +115,7 @@ __global__ void groupmembership( int *d_group_membership, // particle membership
 		// Set the group-specific index at the current particle's global index position in the group membership list
 		d_group_membership[idx] = group_idx;
 
-		printf("group_membership: group_idx = %d, d_group_members[group_idx] = %d; idx = %d, d_group_membership[idx] = %d \n", group_idx, d_group_members[group_idx], idx, d_group_membership[idx]);
+		//printf("group_membership: group_idx = %d, d_group_members[group_idx] = %d; idx = %d, d_group_membership[idx] = %d \n", group_idx, d_group_members[group_idx], idx, d_group_membership[idx]);
 	}
 
 }
@@ -164,7 +164,7 @@ __global__ void spread_charge( Scalar4 *d_pos, // particle positions
 	// Current particle's charge
 	Scalar qj = d_charge[idx];
 	//printf("[Before] spread charge: group_idx = %d, qj = d_charge[group_idx] = %f \n", group_idx, d_charge[group_idx]);
-	printf("[Changed] spread charge: idx = %d, qj = d_charge[idx] = %f \n", idx, qj);
+	//printf("[Changed] spread charge: idx = %d, qj = d_charge[idx] = %f \n", idx, qj);
 
 	// Wait for the particle position to be written to shared memory before proceeding
 	__syncthreads();
@@ -260,7 +260,7 @@ __global__ void spread_dipole( Scalar4 *d_pos, // particle positions
 
 	// Current particle's dipole
 	Scalar3 Sj = d_dipole[group_idx];
-	printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 
 	// Wait for the particle position to be written to shared memory before proceeding
 	__syncthreads();
@@ -361,8 +361,8 @@ __global__ void spread( Scalar4 *d_pos, // particle positions
 	Scalar qj = d_charge[idx];
 	Scalar3 Sj = d_dipole[group_idx];
 	//printf("[Before] spread: group_idx = %d, qj = d_charge[group_idx] = %f \n", group_idx, d_charge[group_idx]);
-	printf("[Changed] spread: group_idx -> idx = %d, qj = d_charge[idx] = %f \n", idx, qj);
-	printf("[Original] spread: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Changed] spread: group_idx -> idx = %d, qj = d_charge[idx] = %f \n", idx, qj);
+	//printf("[Original] spread: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 	//printf("[Changed] spread dipole: group_idx -> idx = %d, Sj = d_dipole[idx] = (%f, %f, %f) \n", idx, Sj.x, Sj.y, Sj.z);
 
 	// Wait for the particle position to be written to shared memory before proceeding
@@ -702,7 +702,7 @@ __global__ void contract_force_charge(	Scalar4 *d_pos,  // particle positions
 	// Current particle's charge
 	Scalar qi = d_charge[idx];
 	//printf("[Before] contract force charge: group_idx = %d, qi = d_charge[group_idx] = %f \n", group_idx, d_charge[group_idx]);
-	printf("[Changed] contract force charge: idx = %d, qi = d_charge[idx] = %f \n", idx, qi);
+	//printf("[Changed] contract force charge: idx = %d, qi = d_charge[idx] = %f \n", idx, qi);
 
 	// Box size
 	Scalar3 L = box.getL();
@@ -768,7 +768,7 @@ __global__ void contract_force_charge(	Scalar4 *d_pos,  // particle positions
 
 	if (thread_offset == 0){
 		d_force[idx] = make_scalar4(force[0].x, force[0].y, force[0].z, 0.0);
-		printf("[Original] contract force charge: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
+		//printf("[Original] contract force charge: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
 	}
 }
 
@@ -824,8 +824,8 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 	Scalar qi = d_charge[idx];
 	Scalar3 Si = d_dipole[group_idx];
 	//printf("[Before] contract force: group_idx = %d, qi = d_charge[group_idx] = %f \n", group_idx, d_charge[group_idx]);
-	printf("[Changed] contract force: group_idx -> idx = %d, qi = d_charge[idx] = %f \n", idx, qi);
-	printf("[Original] contract force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Changed] contract force: group_idx -> idx = %d, qi = d_charge[idx] = %f \n", idx, qi);
+	//printf("[Original] contract force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 	//printf("[Changed] contract force: group_idx -> idx = %d, Si = d_dipole[idx] = (%f, %f, %f) \n", idx, Si.x, Si.y, Si.z);
 
 	// Box size
@@ -895,7 +895,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 
 	if (thread_offset == 0){
 		d_force[idx] = make_scalar4(force[0].x, force[0].y, force[0].z, 0.0);
-		printf("[Original] contract force: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
+		//printf("[Original] contract force: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
 	}
 }
 
