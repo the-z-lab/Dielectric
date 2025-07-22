@@ -745,7 +745,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		Scalar3 dipole;
 		if (group_idx != -1) {
 			dipole = h_dipole.data[group_idx];
-			//printf("OutputData [Dipole] : group_idx = %d, dipole = (%f, %f, %f)\n", group_idx, dipole.x, dipole.y, dipole.z);
+			printf("OutputData [Dipole] : group_idx = %d, dipole = (%f, %f, %f)\n", group_idx, dipole.x, dipole.y, dipole.z);
 		} else {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
