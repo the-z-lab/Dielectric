@@ -555,7 +555,7 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 	//printf("Update Parameter: m_gradient = (%f, %f, %f)\n", m_gradient.x, m_gradient.y, m_gradient.z);
 
 	// Get access to particle conductivity and dipole arrays
-	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::readwrite);
+	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::readwrite);
 
 	// Update arrays
