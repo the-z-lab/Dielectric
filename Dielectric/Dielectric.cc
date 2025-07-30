@@ -734,7 +734,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 	}
 
 	////// Write the particle dipoles to file in global tag order
-	file << "Dipole" << std::endl;
+	file << "Dipole_x  Dipole_y  Dipole_z  idx  group_idx" << std::endl;
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
@@ -753,8 +753,10 @@ void Dielectric::OutputData(unsigned int timestep) {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
 
-		// Write the dipole to file
-		file << std::setprecision(10) << dipole.x << "  " << dipole.y << "  " << dipole.z << "  " << std::endl;
+		// Write the dipole, idx, and group_idx to file
+		file << std::setprecision(10)
+			<< dipole.x << "  " << dipole.y << "  " << dipole.z << "  "
+			<< idx << "  " << group_idx << std::endl;
 	}
 
 	////// Write the particle electric/magnetic forces to file in global tag order
