@@ -260,7 +260,7 @@ __global__ void spread_dipole( Scalar4 *d_pos, // particle positions
 
 	// Current particle's dipole
 	Scalar3 Sj = d_dipole[group_idx];
-	printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 
 	// Wait for the particle position to be written to shared memory before proceeding
 	__syncthreads();
@@ -768,7 +768,7 @@ __global__ void contract_force_charge(	Scalar4 *d_pos,  // particle positions
 
 	if (thread_offset == 0){
 		d_force[idx] = make_scalar4(force[0].x, force[0].y, force[0].z, 0.0);
-		printf("[Original] contract force charge: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
+		//printf("[Original] contract force charge: idx = %d, d_force[idx] = (%f, %f, %f) \n", idx, force[0].x, force[0].y, force[0].z);
 	}
 }
 
@@ -825,7 +825,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 	Scalar3 Si = d_dipole[group_idx];
 	//printf("[Before] contract force: group_idx = %d, qi = d_charge[group_idx] = %f \n", group_idx, d_charge[group_idx]);
 	//printf("[Changed] contract force: group_idx -> idx = %d, qi = d_charge[idx] = %f \n", idx, qi);
-	printf("[Original] contract force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Original] contract force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 	//printf("[Changed] contract force: group_idx -> idx = %d, Si = d_dipole[idx] = (%f, %f, %f) \n", idx, Si.x, Si.y, Si.z);
 
 	// Box size
@@ -1036,8 +1036,8 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 		// Dipole moment and conductivity of current particle
 		Scalar3 Si = d_dipole[group_idx];
 		Scalar lambda_p = d_conductivity[group_idx];
-		printf("[Original] real space field dipole: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
-		printf("[Original] real space field dipole: group_idx = %d, lambda_p = d_conductivity[group_idx] = %f \n", group_idx, d_conductivity[group_idx]);
+		//printf("[Original] real space field dipole: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+		//printf("[Original] real space field dipole: group_idx = %d, lambda_p = d_conductivity[group_idx] = %f \n", group_idx, d_conductivity[group_idx]);
 		//printf("[Changed] real space field dipole: idx = %d, Si = d_dipole[idx] = (%f, %f, %f) \n", idx, d_dipole[idx].x, d_dipole[idx].y, d_dipole[idx].z);
 		//printf("[Changed] real space field dipole: idx = %d, lambda_p = d_conductivity[idx] = %f \n", idx, lambda_p);
 		
