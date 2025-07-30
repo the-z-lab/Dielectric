@@ -69,7 +69,7 @@ class Dielectric : public ForceCompute {
 	GPUArray<Scalar> m_conductivity;		// particle conductivities
 
 	int m_Ntotal;					// total number of particles
-	int m_group_size;				// number of particles in the active group
+	int group_size;				// number of particles in the active group
 	GPUArray<int> m_group_membership;		// active group membership list
 
 	Scalar m_xi;               			// Ewald splitting parameter

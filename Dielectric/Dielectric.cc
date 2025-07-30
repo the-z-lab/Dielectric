@@ -52,14 +52,17 @@ Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this
 	m_gradient = make_scalar3(gradient[0], gradient[1], gradient[2]);
 
 	// Get the group size and total number of particles
-	m_group_size = m_group->getNumMembers();
+	group_size = m_group->getNumMembers();
+	assert(group_size <= m_pdata->getN());
+	if (group_size == 0)
+		return;
 	m_Ntotal = m_pdata->getN();
 	
 	// Extract the particle conductivities
-	GPUArray<Scalar> n_conductivity(m_group_size, m_exec_conf);
+	GPUArray<Scalar> n_conductivity(group_size, m_exec_conf);
 	m_conductivity.swap(n_conductivity);
-	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::readwrite);
-	for (unsigned int i = 0; i < m_group_size; ++i ){
+	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
+	for (unsigned int i = 0; i < group_size; ++i ){
 		h_conductivity.data[i] = conductivity[i];
 	}
 
@@ -164,7 +167,7 @@ void Dielectric::SetParams() {
 	printf("\n");
 	printf("\n");
 	m_exec_conf->msg->notice(2) << "--- ?????? Parameters ---" << std::endl;
-	m_exec_conf->msg->notice(2) << "Active group size: " << m_group_size << std::endl;
+	m_exec_conf->msg->notice(2) << "Active group size: " << group_size << std::endl;
 	m_exec_conf->msg->notice(2) << "Box dimensions: " << L.x << ", " << L.y << ", " << L.z << std::endl;
 	m_exec_conf->msg->notice(2) << "Ewald parameter xi: " << m_xi << std::endl;
 	m_exec_conf->msg->notice(2) << "Error tolerance: " << m_errortol << std::endl;
@@ -471,7 +474,7 @@ void Dielectric::SetParams() {
 	m_group_membership.swap(n_group_membership);
 
 	// Particle dipoles
-	GPUArray<Scalar3> n_dipole(m_group_size, m_exec_conf);
+	GPUArray<Scalar3> n_dipole(group_size, m_exec_conf);
 	m_dipole.swap(n_dipole);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::readwrite);
 
@@ -479,11 +482,11 @@ void Dielectric::SetParams() {
 	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
 
 	// Initialize array for the right side of the linear solve, E0 - M_Eq*q
-	GPUArray<Scalar3> n_Eq(m_group_size, m_exec_conf);
+	GPUArray<Scalar3> n_Eq(group_size, m_exec_conf);
 	m_Eq.swap(n_Eq);
 
 	// Fill the dipole array
-	for( unsigned int ii = 0; ii < m_group_size; ++ii){
+	for( unsigned int ii = 0; ii < group_size; ++ii){
 
 		// Compute the beta parameter
 		Scalar lambda_p = h_conductivity.data[ii];
@@ -517,7 +520,7 @@ void Dielectric::UpdateField(std::vector<float> &field,
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::readwrite);
 
 	// Update dipoles
-	for( unsigned int ii = 0; ii < m_group_size; ++ii){
+	for( unsigned int ii = 0; ii < group_size; ++ii){
 		
 		// Compute the beta parameter
 		Scalar lambda_p = h_conductivity.data[ii];
@@ -559,7 +562,7 @@ void Dielectric::UpdateParameters(std::vector<float> &field,
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::readwrite);
 
 	// Update arrays
-	for (unsigned int i = 0; i < m_group_size; ++i ){
+	for (unsigned int i = 0; i < group_size; ++i ){
 		
 		// Update particle conductivities
 		Scalar lambda_p = conductivity[i];
@@ -661,14 +664,14 @@ void Dielectric::computeForces(unsigned int timestep) {
 
 	// perform the calculation on the GPU
 	if (m_dipoleflag != 2) {
-		gpu_ComputeForce(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, group_size, box, block_size, d_force.data, d_charge.data, 
 				 d_conductivity.data, d_dipole.data, m_field, m_gradient, d_Eq.data, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_phiS_table.data, 
 				 d_ES_table.data, d_gradphiq_table.data, d_gradphiS_table.data, d_gradES_table.data, d_gridk.data, d_scale_phiq.data, d_scale_phiS.data, 
 				 d_scale_ES.data ,d_phiq_grid.data, d_phiS_grid.data, d_Eq_gridX.data, d_Eq_gridY.data, d_Eq_gridZ.data, d_ES_gridX.data,
 				 d_ES_gridY.data, d_ES_gridZ.data, m_plan, m_Nx, m_Ny, m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, 
 				 m_dipoleflag);
 	} else {
-		gpu_ComputeForce_Charge(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce_Charge(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, group_size, box, block_size, d_force.data, d_charge.data, 
 				  	m_field, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_gradphiq_table.data, d_scale_phiq.data, d_phiq_grid.data, m_plan, m_Nx, m_Ny,
 					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol);
 	}
