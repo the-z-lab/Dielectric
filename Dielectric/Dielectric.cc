@@ -718,27 +718,29 @@ void Dielectric::OutputData(unsigned int timestep) {
 	////// Write the particle positions to file in global tag order
 
 	// Header
-	file << "Position" << std::endl;
+	file << "Position_x Position_y Position_z i idx" << std::endl;
 
 	// Loop through particle tags
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
 		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
 		Scalar4 postype = h_pos.data[idx];
 
 		// Write the position to file
-		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << std::endl;
+		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 	////// Write the particle dipoles to file in global tag order
-	file << "Dipole_x  Dipole_y  Dipole_z  idx  group_idx" << std::endl;
+	file << "Dipole_x  Dipole_y  Dipole_z  i idx  group_idx" << std::endl;
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
 		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
 		int group_idx = h_group_membership.data[idx];
@@ -756,7 +758,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		// Write the dipole, idx, and group_idx to file
 		file << std::setprecision(10)
 			<< dipole.x << "  " << dipole.y << "  " << dipole.z << "  "
-			<< idx << "  " << group_idx << std::endl;
+			<< i << "  " << idx << "  " << group_idx << std::endl;
 	}
 
 	////// Write the particle electric/magnetic forces to file in global tag order
@@ -765,12 +767,13 @@ void Dielectric::OutputData(unsigned int timestep) {
 
 		// Get the particle's global index
 		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
 		Scalar4 force = h_force.data[idx];
 
 		// Write the dipole to file
-		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << std::endl;
+		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 
