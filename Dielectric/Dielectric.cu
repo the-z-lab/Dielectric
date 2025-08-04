@@ -83,15 +83,15 @@ __global__ void initialize_grid(CUFFTCOMPLEX *grid, // pointer to the grid array
 }
 
 // Initialize the active group membership/index list
-__global__ void initialize_groupmembership( int *d_group_membership, // particle membership and active group index list
+__global__ void initialize_groupmembership_tag( int *d_group_membership_tag, // particle membership and active group index list
 				      	    unsigned int Ntotal) // total number of particles
 {
 	// Global particle index
-	unsigned int idx = threadIdx.x + blockIdx.x*blockDim.x;
+	unsigned int tag = threadIdx.x + blockIdx.x*blockDim.x;
 
 	// Flag every particle as not a member of the active group of interest
-	if (idx < Ntotal) {
-		d_group_membership[idx] = -1;
+	if (tag < Ntotal) {
+		d_group_membership_tag[tag] = -1;
 		//printf("Initialize group_membership: idx = %d, d_group_membership[idx] = %d \n", idx, d_group_membership[idx]);
 	}
 }
@@ -100,8 +100,9 @@ __global__ void initialize_groupmembership( int *d_group_membership, // particle
 // A particle with global index i that is not a member of the active group has d_groupmembership[i] = -1.
 // A particle with global index i that is a member of the active group has its active group-specific index in d_groupmembership[i].
 // That is, d_group_members[d_groupmembership[i]] = i.
-__global__ void groupmembership( int *d_group_membership, // particle membership and group index list
+__global__ void groupmembership_tag( int *d_group_membership_tag, // particle membership and group index list
 				 unsigned int *d_group_members, // group members
+				 unsigned int *d_rtag,
 				 unsigned int group_size) // number of particles belonging to the group of interest
 {
 	// Group-specific particle index
@@ -110,10 +111,11 @@ __global__ void groupmembership( int *d_group_membership, // particle membership
 	if (group_idx < group_size) {
 		
 		// Global particle index
-		unsigned int idx = d_group_members[group_idx];
+		unsigned int idx = d_group_members[group_idx]; // HOOMD index
+		unsigned int tag = d_rtag[idx]; // Global tag
 
 		// Set the group-specific index at the current particle's global index position in the group membership list
-		d_group_membership[idx] = group_idx;
+		d_group_membership_tag[tag] = group_idx; // Map tag -> group_idx
 
 		//printf("group_membership: group_idx = %d, d_group_members[group_idx] = %d; idx = %d, d_group_membership[idx] = %d \n", group_idx, d_group_members[group_idx], idx, d_group_membership[idx]);
 	}
@@ -909,7 +911,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					int *d_group_membership, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					BoxDim box, // simulation box
 					const unsigned int *d_n_neigh, // pointer to the number of neighbors of each particle 
@@ -950,9 +952,9 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 			
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
-			int neigh_group_idx = d_group_membership[neigh_idx];
+			int neigh_group_idx = d_group_membership_tag[neigh_idx];
 			//printf("[Original] real space charge: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
-			//printf("[Original] real space charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
+			//printf("[Original] real space charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
 			if ( neigh_group_idx != -1 ) {
@@ -1010,7 +1012,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					int *d_group_membership, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					BoxDim box, // simulation box
 					const unsigned int *d_n_neigh, // pointer to the number of neighbors of each particle 
@@ -1068,9 +1070,9 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
-			int neigh_group_idx = d_group_membership[neigh_idx];
+			int neigh_group_idx = d_group_membership_tag[neigh_idx];
 			//printf("[Original] real space field dipole: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
-			//printf("[Original] real space field dipole: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
+			//printf("[Original] real space field dipole: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
 			if ( neigh_group_idx != -1 ) {
@@ -1129,7 +1131,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					int *d_group_membership, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					BoxDim box, // simulation box
 					const unsigned int *d_n_neigh, // pointer to the number of neighbors of each particle 
@@ -1178,9 +1180,9 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
-			int neigh_group_idx = d_group_membership[neigh_idx];
+			int neigh_group_idx = d_group_membership_tag[neigh_idx];
 			//printf("[Original] real space force charge: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
-			//printf("[Original] real space force charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
+			//printf("[Original] real space force charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
 			if ( neigh_group_idx != -1 ) {
@@ -1241,7 +1243,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					int *d_group_membership, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					BoxDim box, // simulation box
 					const unsigned int *d_n_neigh, // pointer to the number of neighbors of each particle 
@@ -1297,9 +1299,9 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
-			int neigh_group_idx = d_group_membership[neigh_idx];
+			int neigh_group_idx = d_group_membership_tag[neigh_idx];
 			//printf("[Original] real space force: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
-			//printf("[Original] real space force: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
+			//printf("[Original] real space force: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
 			if ( neigh_group_idx != -1 ) {
@@ -1362,7 +1364,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 }
 
 cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
-				int *d_group_membership, // particle membership and index in active group
+				int *d_group_membership_tag, // particle membership and index in active group
 				unsigned int *d_group_members, // particles in active group
 				unsigned int group_size, // number of particles in active group
 				const BoxDim& box, // simulation box
@@ -1440,14 +1442,14 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Compute the real space contribution to the field
-    	real_space_field_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, extfield, d_Eq, group_size, d_phiS_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list); 
+    	real_space_field_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, extfield, d_Eq, group_size, d_phiS_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, box, d_n_neigh, d_nlist, d_head_list); 
 
     	gpuErrchk(cudaPeekAtLastError());
     	return cudaSuccess;
 }
 
 cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
-				int *d_group_membership, // particle membership and index in active group
+				int *d_group_membership_tag, // particle membership and index in active group
 				unsigned int *d_group_members, // particles in active group
 				unsigned int group_size, // number of particles in active group
 				const BoxDim& box, // simulation box
@@ -1526,7 +1528,7 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Compute the real space contribution to M_ES * S
-    	real_space_field_dipole<<<Nblocks3, Nthreads3>>>(d_pos, d_dipole, d_conductivity, d_ES, group_size, d_ES_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list, selfterm); 
+    	real_space_field_dipole<<<Nblocks3, Nthreads3>>>(d_pos, d_dipole, d_conductivity, d_ES, group_size, d_ES_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, box, d_n_neigh, d_nlist, d_head_list, selfterm); 
 
     	gpuErrchk(cudaPeekAtLastError());
     	return cudaSuccess;
@@ -1534,7 +1536,7 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 
 // Compute the particle dipoles iteratively using GMRES
 cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
-				int *d_group_membership, // particle membership and index in active group
+				int *d_group_membership_tag, // particle membership and index in active group
 				unsigned int *d_group_members, // particles in active group
 				unsigned int group_size, // number of particles in active group
 				const BoxDim& box, // simulation box
@@ -1570,10 +1572,10 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 				Scalar errortol) // error tolerance
 {
 	// // Compute right side of M_ES * S = E0 - M_Eq * q
-	// FieldChargeMultiply(d_pos, d_group_membership, d_group_members, group_size, box, block_size, d_charge, d_Eq, extfield, xi, eta, rc, drtable, Ntable, d_phiS_table, d_gridk, d_scale_phiS, d_qgrid, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh); 
+	// FieldChargeMultiply(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_charge, d_Eq, extfield, xi, eta, rc, drtable, Ntable, d_phiS_table, d_gridk, d_scale_phiS, d_qgrid, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh); 
 
 	// // Create the matrix-free potential linear operator
-	// cuspPotential M(d_pos, d_group_membership, d_group_members, group_size, box, block_size, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
+	// cuspPotential M(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
 
 	// // Allocate storage for the solution (S) and right side (rhs) on the GPU
 	// cusp::array1d<float, cusp::device_memory> S(M.num_rows, 0);
@@ -1603,7 +1605,7 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 }
 
 cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
-				int *d_group_membership, // particle membership and index in active group
+				int *d_group_membership_tag, // particle membership and index in active group
 				unsigned int Ntotal, // total number of particles
 				unsigned int *d_group_members, // particles in active group
 				unsigned int group_size, // number of particles in active group
@@ -1702,12 +1704,12 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
-	initialize_groupmembership<<<Nblocks4, Nthreads4>>>(d_group_membership, Ntotal); // one thread per total particle
-	groupmembership<<<Nblocks3, Nthreads3>>>(d_group_membership, d_group_members, group_size); 
+	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
+	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size); 
 
 	// Compute the particle dipoles. If constantdipoleflag = 1, this step is skipped and the particles keep their constant dipole model values that were precomputed on the host.
 	if (dipoleflag == 0) {
-		ComputeDipole(d_pos, d_group_membership, d_group_members, group_size, box, block_size, d_charge, 
+		ComputeDipole(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_charge, 
 			      d_conductivity, d_dipole, extfield, d_Eq, xi, eta, rc, drtable, Ntable, d_phiS_table, 
 			      d_ES_table, d_gridk, d_scale_phiS, d_scale_ES, d_phiq_grid, d_ES_gridX, d_ES_gridY, 
 			      d_ES_gridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh, errortol);
@@ -1749,7 +1751,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 	contract_force<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_charge, d_dipole, d_force, d_phiq_grid, d_phiS_grid, d_Eq_gridX, d_Eq_gridY, d_Eq_gridZ, d_ES_gridX, d_ES_gridY, d_ES_gridZ, group_size, Nx, Ny, Nz, d_group_members, box, P, gridh, eta, xiterm, quadW*prefac);   
 
 	// Compute the real space contribution to the force
-    	real_space_force<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_dipole, d_force, extfield, gradient, group_size, d_gradphiq_table, d_gradphiS_table, d_gradES_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
+    	real_space_force<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_dipole, d_force, extfield, gradient, group_size, d_gradphiq_table, d_gradphiS_table, d_gradES_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
 
 	cudaUnbindTexture(phiS_table_tex);
 	cudaUnbindTexture(ES_table_tex);
@@ -1763,7 +1765,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 }
 
 cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
-					int *d_group_membership, // particle membership and index in active group
+					int *d_group_membership_tag, // particle membership and index in active group
 					unsigned int Ntotal, // total number of particles
 					unsigned int *d_group_members, // particles in active group
 					unsigned int group_size, // number of particles in active group
@@ -1826,8 +1828,8 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
-	initialize_groupmembership<<<Nblocks4, Nthreads4>>>(d_group_membership, Ntotal); // one thread per total particle
-	groupmembership<<<Nblocks3, Nthreads3>>>(d_group_membership, d_group_members, group_size); 
+	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
+	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size); 
 
     	// Reset the grid values to zero
 	initialize_grid<<<Nblocks1, Nthreads1>>>(d_phiq_grid,Ngrid);
@@ -1848,7 +1850,7 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
 	contract_force_charge<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_charge, d_force, d_phiq_grid, group_size, Nx, Ny, Nz, d_group_members, box, P, gridh, eta, xiterm, quadW*prefac);   
 
 	// Compute the real space contribution to the force
-    	real_space_force_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_force, extfield, group_size, d_gradphiq_table, rc, Ntable, drtable, d_group_membership, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
+    	real_space_force_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_force, extfield, group_size, d_gradphiq_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, box, d_n_neigh, d_nlist, d_head_list);
 
 	cudaUnbindTexture(phiS_table_tex);
     	cudaUnbindTexture(pos_tex);

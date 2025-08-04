@@ -18,7 +18,7 @@ cudaError_t gpu_ZeroForce(unsigned int Ntotal, // total number of particles
 			  unsigned int block_size); // number of threads per block
 
 cudaError_t gpu_ComputeForce(Scalar4 *d_pos, // particle positions and types
-			     int *d_group_membership, // particle membership and index in active group
+			     int *d_group_membership_tag, // particle membership and index in active group
 			     unsigned int Ntotal, // total number of particles
                              unsigned int *d_group_members, // particles in active group
                              unsigned int group_size, // number of particles in active group
@@ -66,7 +66,7 @@ cudaError_t gpu_ComputeForce(Scalar4 *d_pos, // particle positions and types
 			     int dipoleflag);  // indicates whether to turn off the mutual dipole functionality or ignore dipoles all together
 
 cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and types
-			     int *d_group_membership, // particle membership and index in active group
+			     int *d_group_membership_tag, // particle membership and index in active group
 			     unsigned int Ntotal, // total number of particles
                              unsigned int *d_group_members, // particles in active group
                              unsigned int group_size, // number of particles in active group
@@ -94,9 +94,21 @@ cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and ty
 			     Scalar3 gridh, // grid spacing
 			     Scalar errortol); // error tolerance
 
+cudaError_t groupmembership_tag(
+	int *d_group_membership_tag,
+	unsigned int *d_group_members,
+	unsigned int *d_rtag,
+	unsigned int group_size
+);
+
+cudaError_t initialize_groupmembership_tag(
+	int *d_group_membership_tag,
+	unsigned int Ntotal
+);
+
 // Kernel called by PotentialWrapper.cuh
 cudaError_t FieldDipoleMultiply(Scalar4 *d_pos, // particle positions and types
-			 int *d_group_membership, // particle membership and index in active group
+			 int *d_group_membership_tag, // particle membership and index in active group
 			 unsigned int *d_group_members, // particles in active group
 			 unsigned int group_size, // number of particles in active group
 			 const BoxDim& box, // simulation box

@@ -57,6 +57,7 @@ Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this
 	if (m_group_size == 0)
 		return;
 	m_Ntotal = m_pdata->getN();
+	//m_Ntags = m_pdata->getNGlobal();
 	
 	// Extract the particle conductivities
 	GPUArray<Scalar> n_conductivity(m_group_size, m_exec_conf);
@@ -470,8 +471,8 @@ void Dielectric::SetParams() {
 	////// Initializations for needed arrays
 
 	// Group membership list
-	GPUArray<int> n_group_membership(m_Ntotal, m_exec_conf);
-	m_group_membership.swap(n_group_membership);
+	GPUArray<int> n_group_membership_tag(m_Ntotal, m_exec_conf);
+	m_group_membership_tag.swap(n_group_membership_tag);
 
 	// Particle dipoles
 	GPUArray<Scalar3> n_dipole(m_group_size, m_exec_conf);
@@ -614,7 +615,10 @@ void Dielectric::computeForces(unsigned int timestep) {
 	ArrayHandle<Scalar3> d_dipole(m_dipole, access_location::device, access_mode::readwrite);
 
 	// active group indices
-	ArrayHandle<int> d_group_membership(m_group_membership, access_location::device, access_mode::readwrite);
+	ArrayHandle<int> d_group_membership_tag(m_group_membership_tag, access_location::device, access_mode::readwrite);
+
+	// rtag
+	ArrayHandle<unsigned int> d_rtag();
 
 	// particles in the active group
 	ArrayHandle<unsigned int> d_group_members(m_group->getIndexArray(), access_location::device, access_mode::read);
@@ -664,14 +668,14 @@ void Dielectric::computeForces(unsigned int timestep) {
 
 	// perform the calculation on the GPU
 	if (m_dipoleflag != 2) {
-		gpu_ComputeForce(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				 d_conductivity.data, d_dipole.data, m_field, m_gradient, d_Eq.data, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_phiS_table.data, 
 				 d_ES_table.data, d_gradphiq_table.data, d_gradphiS_table.data, d_gradES_table.data, d_gridk.data, d_scale_phiq.data, d_scale_phiS.data, 
 				 d_scale_ES.data ,d_phiq_grid.data, d_phiS_grid.data, d_Eq_gridX.data, d_Eq_gridY.data, d_Eq_gridZ.data, d_ES_gridX.data,
 				 d_ES_gridY.data, d_ES_gridZ.data, m_plan, m_Nx, m_Ny, m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, 
 				 m_dipoleflag);
 	} else {
-		gpu_ComputeForce_Charge(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce_Charge(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				  	m_field, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_gradphiq_table.data, d_scale_phiq.data, d_phiq_grid.data, m_plan, m_Nx, m_Ny,
 					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol);
 	}
@@ -704,7 +708,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 	ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::read);
 	ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::read);
-	ArrayHandle<int> h_group_membership(m_group_membership, access_location::host, access_mode::read);
+	ArrayHandle<int> h_group_membership_tag(m_group_membership_tag, access_location::host, access_mode::read);
 
 	// Open the file
 	std::ofstream file;
@@ -743,8 +747,8 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
-		int group_idx = h_group_membership.data[idx];
-		printf("OutputData [Dipole]: idx = %d, group idx = h_group_membership.data[idx] = %d \n", idx, group_idx);
+		int group_idx = h_group_membership_tag.data[i];
+		printf("OutputData [Dipole]: idx = %d, group idx = h_group_membership_tag.data[idx] = %d \n", idx, group_idx);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
 		Scalar3 dipole;

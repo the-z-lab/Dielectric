@@ -41,7 +41,7 @@ public:
  
     Scalar4 *d_pos;  // particle positions and types
     Scalar *d_conductivity; // particle conductivity
-    int *d_group_membership; // particle membership and index in group for which the force calculation is being performed
+    int *d_group_membership_tag; // particle membership and index in group for which the force calculation is being performed
     unsigned int *d_group_members;  // index into particle tag
     const unsigned int *d_n_neigh;  // number of neighbors of each particle
     const unsigned int *d_nlist;    // neighbor list
@@ -57,7 +57,7 @@ public:
 
     // constructor
     cuspPotential(Scalar4 *d_pos,
-		  int *d_group_membership,
+          int *d_group_membership_tag,
 		  unsigned int *d_group_members,
 		  unsigned int group_size,
 		  const BoxDim& box,
@@ -85,7 +85,7 @@ public:
                   int P)
                   : super(3*group_size,3*group_size), 
 		  d_pos(d_pos),
-		  d_group_membership(d_group_membership),
+		  d_group_membership_tag(d_group_membership_tag),
 		  d_group_members(d_group_members),
     		  group_size(group_size),
 		  box(box),
@@ -131,7 +131,7 @@ public:
 
         // run kernels to compute y = A*x
 	FieldDipoleMultiply(	d_pos,
-			d_group_membership,
+			d_group_membership_tag,
 			d_group_members,
 			group_size,
 			box,
