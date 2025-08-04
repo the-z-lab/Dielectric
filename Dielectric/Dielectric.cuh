@@ -94,18 +94,6 @@ cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and ty
 			     Scalar3 gridh, // grid spacing
 			     Scalar errortol); // error tolerance
 
-cudaError_t groupmembership_tag(
-	int *d_group_membership_tag,
-	unsigned int *d_group_members,
-	unsigned int *d_rtag,
-	unsigned int group_size
-);
-
-cudaError_t initialize_groupmembership_tag(
-	int *d_group_membership_tag,
-	unsigned int Ntotal
-);
-
 // Kernel called by PotentialWrapper.cuh
 cudaError_t FieldDipoleMultiply(Scalar4 *d_pos, // particle positions and types
 			 int *d_group_membership_tag, // particle membership and index in active group
