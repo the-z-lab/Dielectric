@@ -92,7 +92,7 @@ __global__ void initialize_groupmembership_tag( int *d_group_membership_tag, // 
 	// Flag every particle as not a member of the active group of interest
 	if (tag < Ntotal) {
 		d_group_membership_tag[tag] = -1;
-		printf("Initialize group_membership: tag = %d, d_group_membership[tag] = %d \n", tag, d_group_membership[tag]);
+		printf("Initialize group_membership: tag = %d, d_group_membership_tag[tag] = %d \n", tag, d_group_membership_tag[tag]);
 	}
 }
 
@@ -668,7 +668,6 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 	if (thread_offset == 0){
 		// Store the current particle's output
 		d_output[group_idx] = output[0];
-		printf("[Original] contract: group_idx = %d, d_output[group_idx] = %f \n", group_idx, d_output[group_idx]);
 	}
 }
 
@@ -1047,7 +1046,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
-		unsigned int tag = d_rtag[idx];
+		//unsigned int tag = d_rtag[idx];
 
 		// Get the wave space contribution to M_ES * S
   		Scalar3 ES = d_ES[group_idx];
