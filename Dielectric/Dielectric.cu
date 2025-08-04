@@ -969,7 +969,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 			//printf("[Original] real space charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
@@ -1089,7 +1089,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 			//printf("[Original] real space field dipole: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
 			//printf("[Original] real space field dipole: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
@@ -1114,7 +1114,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 
 					// Dipole of neighbor particle
 					Scalar3 Sj = d_dipole[neigh_group_idx];
-					printf("[Original] real space field dipole: neigh_group_idx = %d, Sj = d_dipole[neigh_group_idx] = (%f, %f, %f) \n", neigh_group_idx, Sj.x, Sj.y, Sj.z);
+					//printf("[Original] real space field dipole: neigh_group_idx = %d, Sj = d_dipole[neigh_group_idx] = (%f, %f, %f) \n", neigh_group_idx, Sj.x, Sj.y, Sj.z);
 
 					// Dot product of neighbor dipole and r
 					Scalar Sjdotr = Sj.x*r.x + Sj.y*r.y + Sj.z*r.z;
@@ -1185,8 +1185,8 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 		// Number of neighbors and location of neighbors in neighbor list for current particle
 		unsigned int n_neigh = d_n_neigh[idx];
 		unsigned int head_i = d_head_list[idx];
-		printf("[Original] real space force charge: idx = %d, n_neigh = d_n_neigh[idx] = %d \n", idx, n_neigh);
-		printf("[Original] real space force charge: idx = %d, head_i = d_head_list[idx] = %d \n", idx, head_i);
+		//printf("[Original] real space force charge: idx = %d, n_neigh = d_n_neigh[idx] = %d \n", idx, n_neigh);
+		//printf("[Original] real space force charge: idx = %d, head_i = d_head_list[idx] = %d \n", idx, head_i);
 
 		// Current particle position and type
 		Scalar4 postypei = __ldg(d_pos+idx);
@@ -1202,7 +1202,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
@@ -1286,14 +1286,14 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 		// Get the reciprocal contribution to the force
   		Scalar4 F4 = d_force[idx];
 		Scalar3 F = make_scalar3(F4.x, F4.y, F4.z);
-		printf("[Changed] real space force: tag = %d, F4 = d_force[tag] = (%f, %f, %f) \n", tag, F4.x, F4.y, F4.z);
+		//printf("[Changed] real space force: tag = %d, F4 = d_force[tag] = (%f, %f, %f) \n", tag, F4.x, F4.y, F4.z);
 
 		// Charge and dipole of current particle
 		Scalar qi = d_charge[idx];
 		Scalar3 Si = d_dipole[group_idx];
-		printf("[Before] real space force: idx = %d, qi = d_charge[idx] = %f \n", idx, d_charge[idx]);
-		printf("[Changed] real space force: tag = %d, qi = d_charge[tag] = %f \n", tag, qi);
-		printf("[Original] real space force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+		//printf("[Before] real space force: idx = %d, qi = d_charge[idx] = %f \n", idx, d_charge[idx]);
+		//printf("[Changed] real space force: tag = %d, qi = d_charge[tag] = %f \n", tag, qi);
+		//printf("[Original] real space force: group_idx = %d, Si = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 		//printf("[Changed] real space force: group_idx -> idx = %d, Si = d_dipole[idx] = (%f, %f, %f) \n", idx, Si.x, Si.y, Si.z);
 
 		// Add the phoretic forces
@@ -1323,7 +1323,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
