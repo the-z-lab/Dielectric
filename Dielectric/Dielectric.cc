@@ -673,11 +673,11 @@ void Dielectric::computeForces(unsigned int timestep) {
 				 d_ES_table.data, d_gradphiq_table.data, d_gradphiS_table.data, d_gradES_table.data, d_gridk.data, d_scale_phiq.data, d_scale_phiS.data, 
 				 d_scale_ES.data ,d_phiq_grid.data, d_phiS_grid.data, d_Eq_gridX.data, d_Eq_gridY.data, d_Eq_gridZ.data, d_ES_gridX.data,
 				 d_ES_gridY.data, d_ES_gridZ.data, m_plan, m_Nx, m_Ny, m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, 
-				 m_dipoleflag);
+				 m_dipoleflag, d_rtag.data);
 	} else {
 		gpu_ComputeForce_Charge(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				  	m_field, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_gradphiq_table.data, d_scale_phiq.data, d_phiq_grid.data, m_plan, m_Nx, m_Ny,
-					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol);
+					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, d_rtag.data);
 	}
 
 	if (m_exec_conf->isCUDAErrorCheckingEnabled())

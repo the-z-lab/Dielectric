@@ -1650,7 +1650,8 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 				int P, // number of grid nodes over which to spread and contract
 				Scalar3 gridh, // grid spacing
 				Scalar errortol, // error tolerance
-				int dipoleflag) // indicates whether or not to turn off the mutual dipole functionality
+				int dipoleflag,
+				unsigned int *d_rtag) // indicates whether or not to turn off the mutual dipole functionality
 {
 
 	// total number of grid nodes
@@ -1704,8 +1705,10 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
+	unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
+
 	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
-	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size); 
+	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
 
 	// Compute the particle dipoles. If constantdipoleflag = 1, this step is skipped and the particles keep their constant dipole model values that were precomputed on the host.
 	if (dipoleflag == 0) {
@@ -1791,7 +1794,8 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
 					const unsigned int *d_head_list, // used to access entries in the neighbor list 
 					int P, // number of grid nodes over which to spread and contract
 					Scalar3 gridh, // grid spacing
-					Scalar errortol)
+					Scalar errortol, 
+					unsigned int *d_rtag)
 {
 
 	// total number of grid nodes
@@ -1828,8 +1832,10 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
+	unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
+
 	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
-	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size); 
+	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
 
     	// Reset the grid values to zero
 	initialize_grid<<<Nblocks1, Nthreads1>>>(d_phiq_grid,Ngrid);

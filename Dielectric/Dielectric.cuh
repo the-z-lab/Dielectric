@@ -58,12 +58,13 @@ cudaError_t gpu_ComputeForce(Scalar4 *d_pos, // particle positions and types
 			     const int Ny, // number of grid nodes in the y dimension
 			     const int Nz, // number of grid nodes in the z dimension
 			     const unsigned int *d_n_neigh, // number of neighbors of each particle
-                             const unsigned int *d_nlist, // neighbor list
-                             const unsigned int *d_head_list, // used to access entries in the neighbor list
+                 const unsigned int *d_nlist, // neighbor list
+                 const unsigned int *d_head_list, // used to access entries in the neighbor list
 			     int P, // number of grid nodes over which to spread and contract
 			     Scalar3 gridh, // grid spacing
 			     Scalar errortol, // error tolerance
-			     int dipoleflag);  // indicates whether to turn off the mutual dipole functionality or ignore dipoles all together
+			     int dipoleflag,  // indicates whether to turn off the mutual dipole functionality or ignore dipoles all together
+				 unsigned int *d_rtag);
 
 cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and types
 			     int *d_group_membership_tag, // particle membership and index in active group
@@ -92,7 +93,8 @@ cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and ty
                              const unsigned int *d_head_list, // used to access entries in the neighbor list
 			     int P, // number of grid nodes over which to spread and contract
 			     Scalar3 gridh, // grid spacing
-			     Scalar errortol); // error tolerance
+			     Scalar errortol, 
+				 unsigned int *d_rtag); // error tolerance
 
 // Kernel called by PotentialWrapper.cuh
 cudaError_t FieldDipoleMultiply(Scalar4 *d_pos, // particle positions and types
