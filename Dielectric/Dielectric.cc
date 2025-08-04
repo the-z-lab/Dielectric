@@ -739,7 +739,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 	}
 
 	////// Write the particle dipoles to file in global tag order
-	file << "Dipole_x  Dipole_y  Dipole_z  i idx  group_idx" << std::endl;
+	file << "Dipole_x  Dipole_y  Dipole_z  i  idx  group_idx" << std::endl;
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
@@ -748,13 +748,13 @@ void Dielectric::OutputData(unsigned int timestep) {
 
 		// Get the particle's active group-specific index
 		int group_idx = h_group_membership_tag.data[i];
-		printf("OutputData [Dipole]: idx = %d, group idx = h_group_membership_tag.data[idx] = %d \n", idx, group_idx);
+		printf("OutputData [Dipole]: i = %d, idx = %d, group_idx = h_group_membership_tag.data[i] = %d \n", i, idx, group_idx);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
 		Scalar3 dipole;
 		if (group_idx != -1) {
 			dipole = h_dipole.data[group_idx];
-			printf("OutputData [Dipole] : group_idx = %d, dipole = (%f, %f, %f)\n", group_idx, dipole.x, dipole.y, dipole.z);
+			printf("OutputData [Dipole] : group_idx = %d, dipole = h_dipole.data[group_idx] = (%f, %f, %f)\n", group_idx, dipole.x, dipole.y, dipole.z);
 		} else {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
