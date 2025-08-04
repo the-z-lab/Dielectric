@@ -133,6 +133,7 @@ public:
 	FieldDipoleMultiply(	d_pos,
 			d_group_membership_tag,
 			d_group_members,
+            d_rtag,
 			group_size,
 			box,
 			block_size,
