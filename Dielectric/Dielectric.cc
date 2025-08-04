@@ -618,7 +618,7 @@ void Dielectric::computeForces(unsigned int timestep) {
 	ArrayHandle<int> d_group_membership_tag(m_group_membership_tag, access_location::device, access_mode::readwrite);
 
 	// rtag
-	ArrayHandle<unsigned int> d_rtag(m_pdata->getRTags(), access_location::device, access_mode::read);
+	ArrayHandle<unsigned int> d_rtag(m_pdata->getRTags().getDevicePointer(), access_location::device, access_mode::read);
 
 	// particles in the active group
 	ArrayHandle<unsigned int> d_group_members(m_group->getIndexArray(), access_location::device, access_mode::read);

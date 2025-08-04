@@ -102,8 +102,8 @@ __global__ void initialize_groupmembership_tag( int *d_group_membership_tag, // 
 // That is, d_group_members[d_groupmembership[i]] = i.
 __global__ void groupmembership_tag( int *d_group_membership_tag, // particle membership and group index list
 				 unsigned int *d_group_members, // group members
-				 unsigned int *d_rtag,
-				 unsigned int group_size) // number of particles belonging to the group of interest
+				 unsigned int group_size, // number of particles belonging to the group of interest
+				 unsigned int *d_rtag) 
 {
 	// Group-specific particle index
 	unsigned int group_idx = threadIdx.x + blockIdx.x*blockDim.x;
