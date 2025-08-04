@@ -1705,7 +1705,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
-	unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
+	//unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
 
 	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
 	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
@@ -1832,7 +1832,7 @@ cudaError_t gpu_ComputeForce_Charge(    Scalar4 *d_pos, // particle posisitons
     	cudaBindTexture(0, pos_tex, d_pos, sizeof(Scalar4) * Ntotal);
 
 	// Update the group membership list
-	unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
+	//unsigned int* d_rtag = m_pdata->getRTags().getDevicePointer();
 
 	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
 	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
