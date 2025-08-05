@@ -940,7 +940,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
-		unsigned int tag = d_rtag[idx];
+		//unsigned int tag = d_rtag[idx];
 
 		// Get the wave space contribution to E0 - M_Eq * q
   		Scalar3 Eq = d_Eq[idx];
@@ -969,7 +969,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 			//printf("[Original] real space charge: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
 
@@ -1089,7 +1089,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 			//printf("[Original] real space field dipole: j = %d, head_i = %d, neigh_idx = d_nlist[head_i + j] = %d \n", j, head_i, neigh_idx);
 			//printf("[Original] real space field dipole: j = %d, neigh_idx = %d, neigh_group_idx = d_group_membership_tag[neigh_idx] = %d \n", j, neigh_idx, neigh_group_idx);
@@ -1167,7 +1167,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
-		unsigned int tag = d_rtag[idx];
+		//unsigned int tag = d_rtag[idx];
 
 		// Get the reciprocal contribution to the force
   		Scalar4 F4 = d_force[idx];
@@ -1202,7 +1202,7 @@ __global__ void real_space_force_charge(Scalar4 *d_pos, // particle positions an
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
@@ -1281,7 +1281,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
-		unsigned int tag = d_rtag[idx];
+		//unsigned int tag = d_rtag[idx];
 
 		// Get the reciprocal contribution to the force
   		Scalar4 F4 = d_force[idx];
@@ -1323,7 +1323,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
-			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
