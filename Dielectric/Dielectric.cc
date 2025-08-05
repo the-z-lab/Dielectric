@@ -732,7 +732,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
-		Scalar4 postype = h_pos.data[i];
+		Scalar4 postype = h_pos.data[idx];
 
 		// Write the position to file
 		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << idx << "  " << std::endl;
@@ -743,11 +743,11 @@ void Dielectric::OutputData(unsigned int timestep) {
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		//unsigned int idx = h_rtag.data[i];
-		//if (idx >= m_Ntotal) continue;
+		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
-		int group_idx = h_group_membership_tag.data[i];
+		int group_idx = h_group_membership_tag.data[idx];
 		printf("OutputData [Dipole]: i = %d, group_idx = h_group_membership_tag.data[i] = %d \n", i, group_idx);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
@@ -774,7 +774,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
-		Scalar4 force = h_force.data[i];
+		Scalar4 force = h_force.data[idx];
 
 		// Write the dipole to file
 		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
