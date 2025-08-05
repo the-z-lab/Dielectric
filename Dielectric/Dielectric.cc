@@ -722,20 +722,20 @@ void Dielectric::OutputData(unsigned int timestep) {
 	////// Write the particle positions to file in global tag order
 
 	// Header
-	file << "Position_x Position_y Position_z i" << std::endl;
+	file << "Position_x Position_y Position_z i idx" << std::endl;
 
 	// Loop through particle tags
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		//unsigned int idx = h_rtag.data[i];  // Getting the data at the i place (tag) in h_rtag list, so idx should be group_idx??
-		//if (idx >= m_Ntotal) continue;
+		unsigned int idx = h_rtag.data[i];  // Getting the data at the i place (tag) in h_rtag list, so idx should be group_idx??
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
 		Scalar4 postype = h_pos.data[i];
 
 		// Write the position to file
-		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << std::endl;
+		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 	////// Write the particle dipoles to file in global tag order
@@ -770,14 +770,14 @@ void Dielectric::OutputData(unsigned int timestep) {
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		//unsigned int idx = h_rtag.data[i];
-		//if (idx >= m_Ntotal) continue;
+		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
 		Scalar4 force = h_force.data[i];
 
 		// Write the dipole to file
-		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << std::endl;
+		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 
