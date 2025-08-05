@@ -1439,10 +1439,6 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 	Scalar xiterm = 2.0*xi2;
 	Scalar prefac = xiterm*xi/PI*sqrtf(2.0/(PI*eta.x*eta.y*eta.z));  // prefactor for the spreading and contracting exponentials
 
-	// Update the group membership list
-	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
-	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
-
     	// Reset the grid values to zero
 	initialize_grid<<<Nblocks1, Nthreads1>>>(d_qgrid,Ngrid);
     	initialize_grid<<<Nblocks1, Nthreads1>>>(d_SgridX,Ngrid);
@@ -1528,10 +1524,6 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 	Scalar xiterm = 2.0*xi2;
 	Scalar prefac = xiterm*xi/PI*sqrtf(2.0/(PI*eta.x*eta.y*eta.z));  // prefactor for the spreading and contracting exponentials
 	Scalar selfterm = (-1.0+6.0*xi2)/(16.0*PI*sqrt(PI)*xi3) + (1.0 - 2.0*xi2)*exp(-4.0*xi2)/(16.0*PI*sqrt(PI)*xi3) + erfc(2.0*xi)/(4.0*PI); // self term in the potential matrix
-
-	// Update the group membership list
-	initialize_groupmembership_tag<<<Nblocks4, Nthreads4>>>(d_group_membership_tag, Ntotal); // one thread per total particle
-	groupmembership_tag<<<Nblocks3, Nthreads3>>>(d_group_membership_tag, d_group_members, group_size, d_rtag); 
 
     	// Reset the grid values to zero
     	initialize_grid<<<Nblocks1, Nthreads1>>>(d_SgridX,Ngrid);
