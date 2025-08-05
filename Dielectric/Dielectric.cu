@@ -943,7 +943,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		//unsigned int tag = d_rtag[idx];
 
 		// Get the wave space contribution to E0 - M_Eq * q
-  		Scalar3 Eq = d_Eq[idx];
+  		Scalar3 Eq = d_Eq[group_idx];
 		//printf("[Before] real space charge: idx = %d, Eq = d_Eq[idx] = (%f, %f, %f) \n", idx, d_Eq[idx].x, d_Eq[idx].y, d_Eq[idx].z);
 		//printf("[Changed] real space charge: tag = %d, Eq = d_Eq[tag] = (%f, %f, %f) \n", tag, Eq.x, Eq.y, Eq.z);
 
@@ -952,8 +952,6 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		unsigned int head_i = d_head_list[idx];
 		//printf("[Original] real space charge: idx = %d, n_neigh = d_n_neigh[idx] = %d \n", idx, d_n_neigh[idx]);
 		//printf("[Original] real space charge: idx = %d, head_i = d_head_list[idx] = %d \n", idx, d_head_list[idx]);
-		//printf("[Changed] real space charge: tag = %d, n_neigh = d_n_neigh[tag] = %d \n", tag, d_n_neigh[tag]);
-		//printf("[Changed] real space charge: tag = %d, head_i = d_head_list[tag] = %d \n", tag, d_head_list[tag]);
 
 		// Current particle position and type
 		Scalar4 postypei = __ldg(d_pos+idx);
@@ -1012,7 +1010,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		}// end neighbor loop
 
 		// Subtract the result from the external field and write to the current particle's position in the output array
-		d_Eq[idx] = E0 - Eq;
+		d_Eq[group_idx] = E0 - Eq;
 		//printf("[Before] real space charge: idx = %d, d_Eq[idx] = (%f, %f, %f) \n", idx, d_Eq[idx].x, d_Eq[idx].y, d_Eq[idx].z);
 		//printf("[Changed] real space charge: tag = %d, d_Eq[tag] = (%f, %f, %f) \n", tag, d_Eq[tag].x, d_Eq[tag].y, d_Eq[tag].z);
 
