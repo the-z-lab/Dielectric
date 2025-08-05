@@ -99,6 +99,7 @@ cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and ty
 // Kernel called by PotentialWrapper.cuh
 cudaError_t FieldDipoleMultiply(Scalar4 *d_pos, // particle positions and types
 			 int *d_group_membership_tag, // particle membership and index in active group
+			 unsigned int Ntotal, 
 			 unsigned int *d_group_members, // particles in active group
 			 unsigned int *d_rtag, 
 			 unsigned int group_size, // number of particles in active group

@@ -23,6 +23,7 @@ public:
     typedef cusp::linear_operator<float,cusp::device_memory> super; // Defines size of linear operator
   
     unsigned int group_size; // Number of particles
+    unsigned int Ntotal;
 
     Scalar xi;  // Ewald splitting parameter
     Scalar3 eta;  // Spectral splitting parameter
@@ -59,6 +60,7 @@ public:
     // constructor
     cuspPotential(Scalar4 *d_pos,
           int *d_group_membership_tag,
+          unsigned int Ntotal, 
 		  unsigned int *d_group_members,
 		  unsigned int group_size,
 		  const BoxDim& box,
@@ -87,6 +89,7 @@ public:
                   : super(3*group_size,3*group_size), 
 		  d_pos(d_pos),
 		  d_group_membership_tag(d_group_membership_tag),
+          Ntotal(Ntotal),
 		  d_group_members(d_group_members),
     		  group_size(group_size),
 		  box(box),
@@ -133,6 +136,7 @@ public:
         // run kernels to compute y = A*x
 	FieldDipoleMultiply(	d_pos,
 			d_group_membership_tag,
+            Ntotal,
 			d_group_members,
             d_rtag,
 			group_size,

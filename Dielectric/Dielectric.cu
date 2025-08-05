@@ -1387,6 +1387,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 
 cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 				int *d_group_membership_tag, // particle membership and index in active group
+				unsigned int Ntotal, // total number of particles
 				unsigned int *d_group_members, // particles in active group
 				unsigned int *d_rtag,
 				unsigned int group_size, // number of particles in active group
@@ -1431,6 +1432,10 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
     	// for the real space calculation, use one thread per particle
     	dim3 Nblocks3( (group_size/block_size) + 1, 1, 1);
     	dim3 Nthreads3(block_size, 1, 1);
+
+	// for initializing group membership, use one thread per total particle
+	dim3 Nblocks4( (Ntotal/block_size) + 1, 1, 1 );
+	dim3 Nthreads4(block_size, 1, 1);
 
 	// Factors needed for the kernels
 	Scalar quadW = gridh.x*gridh.y*gridh.z; // trapezoidal rule weights
@@ -1477,6 +1482,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 
 cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 				int *d_group_membership_tag, // particle membership and index in active group
+				unsigned int Ntotal, // total number of particles
 				unsigned int *d_group_members, // particles in active group
 				unsigned int *d_rtag, 
 				unsigned int group_size, // number of particles in active group
@@ -1520,6 +1526,10 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
     	// for the real space calculation, use one thread per particle
     	dim3 Nblocks3( (group_size/block_size) + 1, 1, 1);
     	dim3 Nthreads3(block_size, 1, 1);
+
+	// for initializing group membership, use one thread per total particle
+	dim3 Nblocks4( (Ntotal/block_size) + 1, 1, 1 );
+	dim3 Nthreads4(block_size, 1, 1);
 
 	// Factors needed for the kernels
 	Scalar quadW = gridh.x*gridh.y*gridh.z; // trapezoidal rule weights
