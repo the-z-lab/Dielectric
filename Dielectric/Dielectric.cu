@@ -950,8 +950,8 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		// Number of neighbors and location of neighbors in neighbor list for current particle
 		unsigned int n_neigh = d_n_neigh[idx];
 		unsigned int head_i = d_head_list[idx];
-		printf("[Original] real space charge: idx = %d, n_neigh = d_n_neigh[idx] = %d \n", idx, d_n_neigh[idx]);
-		printf("[Original] real space charge: idx = %d, head_i = d_head_list[idx] = %d \n", idx, d_head_list[idx]);
+		//printf("[Original] real space charge: idx = %d, n_neigh = d_n_neigh[idx] = %d \n", idx, d_n_neigh[idx]);
+		//printf("[Original] real space charge: idx = %d, head_i = d_head_list[idx] = %d \n", idx, d_head_list[idx]);
 		//printf("[Changed] real space charge: tag = %d, n_neigh = d_n_neigh[tag] = %d \n", tag, d_n_neigh[tag]);
 		//printf("[Changed] real space charge: tag = %d, head_i = d_head_list[tag] = %d \n", tag, d_head_list[tag]);
 
@@ -1324,7 +1324,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_rtag[neigh_idx];
 			unsigned int neigh_group_idx = d_group_membership_tag[neigh_tag];
-			printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
+			//printf("[Changed] real space charge: neigh_idx = %d, neigh_tag = d_rtag[neigh_idx] = %d, neigh_group_idx = d_group_membership_tag[neigh_tag] = %d \n", neigh_idx, neigh_tag, neigh_group_idx);
 
 			// Check if neighbor is a member of the group of interest
 			if ( neigh_group_idx != -1 ) {
