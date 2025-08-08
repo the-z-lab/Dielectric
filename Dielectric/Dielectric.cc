@@ -747,7 +747,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
-		int group_idx = h_group_membership_tag.data[idx];
+		int group_idx = h_group_membership_tag.data[i];
 		printf("OutputData [Dipole]: i = %d, group_idx = h_group_membership_tag.data[i] = %d \n", i, group_idx);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.

@@ -92,7 +92,7 @@ __global__ void initialize_groupmembership_tag( int *d_group_membership_tag, // 
 	// Flag every particle as not a member of the active group of interest
 	if (tag < Ntotal) {
 		d_group_membership_tag[tag] = -1;
-		printf("Initialize group_membership: tag = %d, d_group_membership_tag[tag] = %d \n", tag, d_group_membership_tag[tag]);
+		//printf("Initialize group_membership: tag = %d, d_group_membership_tag[tag] = %d \n", tag, d_group_membership_tag[tag]);
 	}
 }
 
@@ -118,7 +118,7 @@ __global__ void groupmembership_tag( int *d_group_membership_tag, // particle me
 		// Set the group-specific index at the current particle's global index position in the group membership list
 		d_group_membership_tag[tag] = group_idx; // Map tag -> group_idx
 
-		printf("group_membership_tag: group_idx = %d, (idx =) d_group_members[group_idx] = %d, tag = d_rtag[idx] = %d, d_group_membership_tag[tag] = group_idx = %d \n", group_idx, d_group_members[group_idx], tag, d_group_membership_tag[tag]);
+		//printf("group_membership_tag: group_idx = %d, (idx =) d_group_members[group_idx] = %d, tag = d_rtag[idx] = %d, d_group_membership_tag[tag] = group_idx = %d \n", group_idx, d_group_members[group_idx], tag, d_group_membership_tag[tag]);
 	}
 
 }
@@ -267,7 +267,7 @@ __global__ void spread_dipole( Scalar4 *d_pos, // particle positions
 
 	// Current particle's dipole
 	Scalar3 Sj = d_dipole[group_idx];
-	printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
+	//printf("[Original] spread dipole: group_idx = %d, Sj = d_dipole[group_idx] = (%f, %f, %f) \n", group_idx, d_dipole[group_idx].x, d_dipole[group_idx].y, d_dipole[group_idx].z);
 
 	// Wait for the particle position to be written to shared memory before proceeding
 	__syncthreads();
