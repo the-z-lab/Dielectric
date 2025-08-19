@@ -732,7 +732,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
-		Scalar4 postype = h_pos.data[i];
+		Scalar4 postype = h_pos.data[idx]; // idx
 
 		// Write the position to file
 		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << idx << "  " << std::endl;
@@ -774,7 +774,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
-		Scalar4 force = h_force.data[i];
+		Scalar4 force = h_force.data[i]; // idx
 
 		// Write the dipole to file
 		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
