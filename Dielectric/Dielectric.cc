@@ -618,7 +618,10 @@ void Dielectric::computeForces(unsigned int timestep) {
 	ArrayHandle<int> d_group_membership_tag(m_group_membership_tag, access_location::device, access_mode::readwrite);
 
 	// rtag
-	ArrayHandle<unsigned int> d_rtag(m_pdata->getRTags(), access_location::device, access_mode::read);
+	//ArrayHandle<unsigned int> d_rtag(m_pdata->getRTags(), access_location::device, access_mode::read);
+
+	// tag
+	ArrayHandle<unsigned int> d_tag(m_pdata->getTags(), access_location::device, access_mode::read);
 
 	// particles in the active group
 	ArrayHandle<unsigned int> d_group_members(m_group->getIndexArray(), access_location::device, access_mode::read);
@@ -673,11 +676,11 @@ void Dielectric::computeForces(unsigned int timestep) {
 				 d_ES_table.data, d_gradphiq_table.data, d_gradphiS_table.data, d_gradES_table.data, d_gridk.data, d_scale_phiq.data, d_scale_phiS.data, 
 				 d_scale_ES.data ,d_phiq_grid.data, d_phiS_grid.data, d_Eq_gridX.data, d_Eq_gridY.data, d_Eq_gridZ.data, d_ES_gridX.data,
 				 d_ES_gridY.data, d_ES_gridZ.data, m_plan, m_Nx, m_Ny, m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, 
-				 m_dipoleflag, d_rtag.data);
+				 m_dipoleflag, d_tag.data);
 	} else {
 		gpu_ComputeForce_Charge(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				  	m_field, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_gradphiq_table.data, d_scale_phiq.data, d_phiq_grid.data, m_plan, m_Nx, m_Ny,
-					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, d_rtag.data);
+					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, d_tag.data);
 	}
 
 	if (m_exec_conf->isCUDAErrorCheckingEnabled())
@@ -704,7 +707,10 @@ void Dielectric::OutputData(unsigned int timestep) {
 	std::string filename = m_fileprefix + "." + timestep_str.str() + ".txt";
 
 	// Access needed data
+	// idx = h_rtag.data[tag]
+	// tag = h_tag.data[idx]
 	ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
+	ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
 	ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::read);
 	ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::read);
@@ -728,7 +734,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		unsigned int idx = h_rtag.data[i];  // Getting the data at the i place (tag) in h_rtag list, so idx should be group_idx??
+		unsigned int idx = h_rtag.data[i];  // idx = h_rtag.data[tag]
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
@@ -774,7 +780,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
-		Scalar4 force = h_force.data[i]; // idx
+		Scalar4 force = h_force.data[idx]; // idx
 
 		// Write the dipole to file
 		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
