@@ -62,7 +62,7 @@ Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this
 	// Extract the particle conductivities
 	GPUArray<Scalar> n_conductivity(m_group_size, m_exec_conf);
 	m_conductivity.swap(n_conductivity);
-	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
+	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::readwrite);
 	for (unsigned int i = 0; i < m_group_size; ++i ){
 		h_conductivity.data[i] = conductivity[i];
 	}
