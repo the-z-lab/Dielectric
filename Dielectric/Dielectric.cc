@@ -757,7 +757,8 @@ void Dielectric::OutputData(unsigned int timestep) {
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		int idx = h_rtag.data[i];
+		unsigned int idx = h_rtag.data[i];
+		unsigned int group_idx = h_group_membership_tag[i];
 		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
