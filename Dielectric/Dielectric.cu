@@ -326,6 +326,7 @@ __global__ void spread( Scalar4 *d_pos, // particle positions
 			int Ny, // number of grid nodes in y dimension
 			int Nz, // number of grid nodes in z dimension
 			unsigned int *d_group_members, // pointer to array of particles belonging to the group
+			unsigned int *d_tag, 
 			int *d_group_tag, 
 			BoxDim box, // simulation box
 			const int P, // number of nodes to spread the particle dipole over
@@ -566,7 +567,7 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 				int Nz, // number of grid nodes in z dimension
 				int *d_group_membership_tag,
 				unsigned int *d_group_members, // pointer to array of particles belonging to the group
-				unsigned int *d_rtag, 
+				unsigned int *d_tag, 
 				//int *d_group_tag, 
 				BoxDim box, // simulation box
 				const int P, // number of nodes to spread the particle dipole over
@@ -588,9 +589,9 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 
 	// Global particle ID
     unsigned int idx = d_group_members[group_idx];
-	unsigned int tag = d_rtag[idx];
+	unsigned int tag = d_tag[idx];
 	//int group_tag = d_group_tag[tag];
-	int group_idx = d_group_memebrship_tag[tag];
+	//int group_idx = d_group_memebrship_tag[tag];
 
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
 	output[thread_offset] = make_scalar3(0.0,0.0,0.0);
@@ -1003,7 +1004,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					//int *d_group_membership_tag, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					unsigned int *d_tag,
 					int *d_group_tag,
@@ -1021,7 +1022,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
-		unsigned int tag = d_rtag[idx];
+		unsigned int tag = d_tag[idx];
 		int group_tag = d_group_tag[tag];
 
 		// Get the wave space contribution to M_ES * S
@@ -1057,7 +1058,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_tag[neigh_idx];
-			//int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			int neigh_group_tag = d_group_tag[neigh_tag];
 
 			// Check if neighbor is a member of the group of interest
@@ -1220,7 +1221,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 					Scalar rc, // real space cutoff radius
 					int Ntable, // number of entries in the real space table
 					Scalar drtable, // spacing between table entries
-					//int *d_group_membership_tag, // particle membership and index in group
+					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					unsigned int *d_tag,
 					int *d_group_tag,
@@ -1273,7 +1274,7 @@ __global__ void real_space_force( 	Scalar4 *d_pos, // particle positions and typ
 			// Get neighbor global and group index
 			unsigned int neigh_idx = d_nlist[head_i + j];
 			unsigned int neigh_tag = d_tag[neigh_idx];
-			//int neigh_group_idx = d_group_membership_tag[neigh_tag];
+			int neigh_group_idx = d_group_membership_tag[neigh_tag];
 			int neigh_group_tag = d_group_tag[neigh_tag];
 
 			// Check if neighbor is a member of the group of interest
@@ -1403,7 +1404,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
     	initialize_grid<<<Nblocks1, Nthreads1>>>(d_SgridZ,Ngrid);
 
 	// Spread charges from the particles to the grid
-	spread_charge<<<Nblocks2, Nthreads2>>>(d_pos, d_charge, d_qgrid, group_size, Nx, Ny, Nz, d_group_members, box, P, gridh, eta, xiterm, prefac); // d_rtag
+	spread_charge<<<Nblocks2, Nthreads2>>>(d_pos, d_charge, d_qgrid, group_size, Nx, Ny, Nz, d_group_members, box, P, gridh, eta, xiterm, prefac); // d_tag
 
 	//  Compute the Fourier transform of the gridded data
     	cufftExecC2C(plan, d_qgrid, d_qgrid, CUFFT_FORWARD);
@@ -1417,7 +1418,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 	cufftExecC2C(plan, d_SgridZ, d_SgridZ, CUFFT_INVERSE);
 
 	// Contract the gridded values to the particles to get the wave space contribution to the field
-	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_Eq, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_members, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
+	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_Eq, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_membership_tag, d_group_members, d_tag, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
 
 	gpuErrchk(cudaPeekAtLastError());
 
@@ -1519,7 +1520,7 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Compute the real space contribution to M_ES * S
-    	real_space_field_dipole<<<Nblocks3, Nthreads3>>>(d_pos, d_dipole, d_conductivity, d_ES, group_size, d_ES_table, rc, Ntable, drtable, d_group_members, d_tag, d_group_tag, box, d_n_neigh, d_nlist, d_head_list, selfterm); 
+    	real_space_field_dipole<<<Nblocks3, Nthreads3>>>(d_pos, d_dipole, d_conductivity, d_ES, group_size, d_ES_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, d_tag, d_group_tag, box, d_n_neigh, d_nlist, d_head_list, selfterm); 
 
     	gpuErrchk(cudaPeekAtLastError());
     	return cudaSuccess;
@@ -1719,7 +1720,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
     	initialize_grid<<<Nblocks1, Nthreads1>>>(d_ES_gridZ,Ngrid);
 
 	// Spread charges and dipoles from the particles to the grid
-	spread<<<Nblocks2, Nthreads2>>>(d_pos, d_charge, d_dipole, d_phiq_grid, d_ES_gridX, d_ES_gridY, d_ES_gridZ, group_size, Nx, Ny, Nz, d_group_members, d_group_tag, box, P, gridh, eta, xiterm, prefac); // d_rtag
+	spread<<<Nblocks2, Nthreads2>>>(d_pos, d_charge, d_dipole, d_phiq_grid, d_ES_gridX, d_ES_gridY, d_ES_gridZ, group_size, Nx, Ny, Nz, d_group_members, d_tag, d_group_tag, box, P, gridh, eta, xiterm, prefac); // d_rtag
 
 	//  Compute the Fourier transform of the gridded data
 	cufftExecC2C(plan, d_phiq_grid, d_phiq_grid, CUFFT_FORWARD);
@@ -1744,7 +1745,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 	contract_force<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_charge, d_dipole, d_force, d_phiq_grid, d_phiS_grid, d_Eq_gridX, d_Eq_gridY, d_Eq_gridZ, d_ES_gridX, d_ES_gridY, d_ES_gridZ, group_size, Nx, Ny, Nz, d_group_members, d_tag, d_group_tag, box, P, gridh, eta, xiterm, quadW*prefac);   // d_rtag
 
 	// Compute the real space contribution to the force
-    	real_space_force<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_dipole, d_force, extfield, gradient, group_size, d_gradphiq_table, d_gradphiS_table, d_gradES_table, rc, Ntable, drtable, d_group_members, d_tag, d_group_tag, box, d_n_neigh, d_nlist, d_head_list);
+    	real_space_force<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, d_dipole, d_force, extfield, gradient, group_size, d_gradphiq_table, d_gradphiS_table, d_gradES_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, d_tag, d_group_tag, box, d_n_neigh, d_nlist, d_head_list);
 
 	cudaUnbindTexture(phiS_table_tex);
 	cudaUnbindTexture(ES_table_tex);
