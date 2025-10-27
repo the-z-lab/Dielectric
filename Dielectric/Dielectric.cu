@@ -589,7 +589,7 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 
 	// Global particle ID
     unsigned int idx = d_group_members[group_idx];
-	unsigned int tag = d_tag[idx];
+	//unsigned int tag = d_tag[idx];
 	//int group_tag = d_group_tag[tag];
 	//int group_idx = d_group_memebrship_tag[tag];
 
