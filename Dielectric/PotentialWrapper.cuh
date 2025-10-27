@@ -45,6 +45,7 @@ public:
     int *d_group_membership_tag; // particle membership and index in group for which the force calculation is being performed
     unsigned int *d_group_members;  // index into particle tag
     unsigned int *d_tag;
+    //int *d_group_tag;
     const unsigned int *d_n_neigh;  // number of neighbors of each particle
     const unsigned int *d_nlist;    // neighbor list
     const unsigned int *d_head_list;  // used to access entries in the neighbor list
@@ -139,6 +140,7 @@ public:
             Ntotal,
 			d_group_members,
             d_tag,
+            d_group_tag,
 			group_size,
 			box,
 			block_size,

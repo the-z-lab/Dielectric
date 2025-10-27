@@ -26,7 +26,7 @@ from hoomd.md.force import _force
 class Dielectric(_force):
 
     # Initialize the Dielectric force
-    def __init__(self, group, conductivity, field = [0., 0., 0.], gradient = [0., 0., 0.], xi = 0.5, errortol = 1e-3,
+    def __init__(self, group, group_tag, conductivity, field = [0., 0., 0.], gradient = [0., 0., 0.], xi = 0.5, errortol = 1e-3,
 		 fileprefix = "", period = 0, dipoleflag = 0):
 
         hoomd.util.print_status_line();
@@ -56,7 +56,7 @@ class Dielectric(_force):
 
             # Add the new force to the system
             self.cpp_force = _Dielectric.Dielectric(hoomd.context.current.system_definition, group.cpp_group,
-                                                    self.neighbor_list, conductivity, field, gradient, xi, errortol, fileprefix,
+                                                    self.neighbor_list, group_tag, conductivity, field, gradient, xi, errortol, fileprefix,
                                                     period, dipoleflag, hoomd.context.current.system.getCurrentTimeStep());
             hoomd.context.current.system.addCompute(self.cpp_force,self.force_name);
 
@@ -78,8 +78,8 @@ class Dielectric(_force):
 
     # Update simulation parameters.  This is needed if any of the simulation
     # parameters change, including the volume fraction or shape of the simulation box.
-    def update_parameters(self, conductivity, field, gradient = [0, 0, 0], fileprefix = "", period = 0, dipoleflag = 0):
-        self.cpp_force.UpdateParameters(field, gradient, conductivity, fileprefix, period, dipoleflag,
+    def update_parameters(self, group_tag, conductivity, field, gradient = [0, 0, 0], fileprefix = "", period = 0, dipoleflag = 0):
+        self.cpp_force.UpdateParameters(group_tag, field, gradient, conductivity, fileprefix, period, dipoleflag,
                                         hoomd.context.current.system.getCurrentTimeStep());
         self.cpp_force.SetParams();
 

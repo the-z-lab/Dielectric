@@ -71,6 +71,7 @@ class Dielectric : public ForceCompute {
 	int m_Ntotal;					// total number of particles
 	int m_group_size;				// number of particles in the active group
 	GPUArray<int> m_group_membership_tag;		// active group membership list
+	GPUArray<int> m_group_tag;
 
 	Scalar m_xi;               			// Ewald splitting parameter
 	Scalar m_errortol;				// error tolerance
