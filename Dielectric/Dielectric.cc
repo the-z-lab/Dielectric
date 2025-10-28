@@ -751,7 +751,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 	}
 
 	////// Write the particle dipoles to file in global tag order
-	file << "Dipole_x  Dipole_y  Dipole_z  i  group_idx" << std::endl;
+	file << "Dipole_x  Dipole_y  Dipole_z  i  group_tag" << std::endl;
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
