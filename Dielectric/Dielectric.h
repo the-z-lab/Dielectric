@@ -25,9 +25,10 @@ class Dielectric : public ForceCompute {
         Dielectric(std::shared_ptr<SystemDefinition> sysdef,
                     std::shared_ptr<ParticleGroup> group,
 	            std::shared_ptr<NeighborList> nlist,
+				std::vector<int> &group_tag, 
+				std::vector<float> &conductivity,
 		    std::vector<float> &field,
 		    std::vector<float> &gradient,
-		    std::vector<float> &conductivity,
 	            Scalar xi,
 		    Scalar errortol,
 		    std::string fileprefix,
@@ -46,7 +47,8 @@ class Dielectric : public ForceCompute {
 			 std::vector<float> &gradient);
 
 	// Update simulation parameters
-	void UpdateParameters(std::vector<float> &field,
+	void UpdateParameters(std::vector<int> &group_tag,
+				  std::vector<float> &field,
 			      std::vector<float> &gradient,
 			      std::vector<float> &conductivity,
 			      std::string fileprefix,
