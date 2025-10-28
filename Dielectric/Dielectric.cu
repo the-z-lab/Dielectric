@@ -565,10 +565,10 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 				int Nx, // number of grid nodes in x dimension
 				int Ny, // number of grid nodes in y dimension
 				int Nz, // number of grid nodes in z dimension
-				int *d_group_membership_tag,
+				//int *d_group_membership_tag,
 				unsigned int *d_group_members, // pointer to array of particles belonging to the group
 				unsigned int *d_tag, 
-				//int *d_group_tag, 
+				int *d_group_tag, 
 				BoxDim box, // simulation box
 				const int P, // number of nodes to spread the particle dipole over
 				Scalar3 gridh, // grid spacing
@@ -589,8 +589,8 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 
 	// Global particle ID
     unsigned int idx = d_group_members[group_idx];
-	//unsigned int tag = d_tag[idx];
-	//int group_tag = d_group_tag[tag];
+	unsigned int tag = d_tag[idx];
+	int group_tag = d_group_tag[tag];
 	//int group_idx = d_group_memebrship_tag[tag];
 
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
@@ -663,7 +663,7 @@ __global__ void contract(	Scalar4 *d_pos,  // particle positions
 
 	if (thread_offset == 0){
 		// Store the current particle's output
-		d_output[group_idx] = output[0];
+		d_output[group_tag] = output[0];
 	}
 }
 
@@ -1339,6 +1339,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 				unsigned int Ntotal, // total number of particles
 				unsigned int *d_group_members, // particles in active group
 				unsigned int *d_tag,
+				int *d_group_tag, 
 				unsigned int group_size, // number of particles in active group
 				const BoxDim& box, // simulation box
 				unsigned int block_size, // number of threads to use per block
@@ -1418,7 +1419,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 	cufftExecC2C(plan, d_SgridZ, d_SgridZ, CUFFT_INVERSE);
 
 	// Contract the gridded values to the particles to get the wave space contribution to the field
-	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_Eq, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_membership_tag, d_group_members, d_tag, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
+	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_Eq, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_members, d_tag, d_group_tag, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
 
 	gpuErrchk(cudaPeekAtLastError());
 
@@ -1515,7 +1516,7 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
     	cufftExecC2C(plan, d_SgridZ, d_SgridZ, CUFFT_INVERSE);
 
 	// Contract the gridded values to the particles to get the wave space contribution to M_ES * S
-	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_ES, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_membership_tag, d_group_members, d_tag, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
+	contract<<<Nblocks2, Nthreads2, 3*(P*P*P+1)*sizeof(float)>>>(d_pos, d_ES, d_SgridX, d_SgridY, d_SgridZ, group_size, Nx, Ny, Nz, d_group_members, d_tag, d_group_tag, box, P, gridh, xi, eta, xiterm, quadW*prefac);   
 
 	gpuErrchk(cudaPeekAtLastError());
 
