@@ -801,7 +801,7 @@ void Dielectric::OutputData(unsigned int timestep) {
 void export_Dielectric(pybind11::module& m)
 {
     pybind11::class_<Dielectric, std::shared_ptr<Dielectric>> (m, "Dielectric", pybind11::base<ForceCompute>())
-		.def(pybind11::init< std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>, std::shared_ptr<NeighborList>, std::vector<float>&, std::vector<float>&, std::vector<float>&, Scalar, Scalar, std::string, int, int, unsigned int >())
+		.def(pybind11::init< std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>, std::shared_ptr<NeighborList>, std::vector<int>&, std::vector<float>&, std::vector<float>&, std::vector<float>&, Scalar, Scalar, std::string, int, int, unsigned int >())
 		.def("SetParams", &Dielectric::SetParams)
 		.def("UpdateField", &Dielectric::UpdateField)
 		.def("UpdateParameters", &Dielectric::UpdateParameters)
