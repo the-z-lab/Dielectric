@@ -63,8 +63,6 @@ Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this
 	// group_tag
 	GPUArray<int> n_group_tag(m_Ntotal, m_exec_conf);
 	m_group_tag.swap(n_group_tag);
-	if (m_group_tag.size() != m_Ntotal)
-        throw std::runtime_error("group_tag size must equal number of particles");
 	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::readwrite);
 	for (unsigned int i = 0; i < m_Ntotal; ++i ){
 		h_group_tag.data[i] = group_tag[i];
