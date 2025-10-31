@@ -1530,7 +1530,10 @@ cudaError_t FieldDipoleMultiply(       Scalar4 *d_pos, // particle posisitons
 // Compute the particle dipoles iteratively using GMRES
 cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 				int *d_group_membership_tag, // particle membership and index in active group
+				unsigned int Ntotal, 
 				unsigned int *d_group_members, // particles in active group
+				unsigned int *d_tag, 
+				int *d_group_tag, 
 				unsigned int group_size, // number of particles in active group
 				const BoxDim& box, // simulation box
 				unsigned int block_size, // number of threads to use per block
@@ -1564,34 +1567,34 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 				Scalar3 gridh, // grid spacing
 				Scalar errortol) // error tolerance
 {
-	// // Compute right side of M_ES * S = E0 - M_Eq * q
-	// FieldChargeMultiply(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_charge, d_Eq, extfield, xi, eta, rc, drtable, Ntable, d_phiS_table, d_gridk, d_scale_phiS, d_qgrid, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh); 
+	// Compute right side of M_ES * S = E0 - M_Eq * q
+	FieldChargeMultiply(d_pos, d_group_membership_tag, Ntotal, d_group_members, d_tag, d_group_tag, group_size, box, block_size, d_charge, d_Eq, extfield, xi, eta, rc, drtable, Ntable, d_phiS_table, d_gridk, d_scale_phiS, d_qgrid, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh); 
 
-	// // Create the matrix-free potential linear operator
-	// cuspPotential M(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
+	// Create the matrix-free potential linear operator
+	cuspPotential M(d_pos, d_group_membership_tag, Ntotal, d_group_members, d_tag, d_group_tag, group_size, box, block_size, d_conductivity, xi, eta, rc, drtable, Ntable, d_ES_table, d_gridk, d_scale_ES, d_SgridX, d_SgridY, d_SgridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, gridh, P);
 
-	// // Allocate storage for the solution (S) and right side (rhs) on the GPU
-	// cusp::array1d<float, cusp::device_memory> S(M.num_rows, 0);
-	// cusp::array1d<float, cusp::device_memory> rhs(M.num_rows, 0);
+	// Allocate storage for the solution (S) and right side (rhs) on the GPU
+	cusp::array1d<float, cusp::device_memory> S(M.num_rows, 0);
+	cusp::array1d<float, cusp::device_memory> rhs(M.num_rows, 0);
 
-	// // Get pointers to the cusp arrays
-	// float *d_S = thrust::raw_pointer_cast(&S[0]);
-	// float *d_rhs = thrust::raw_pointer_cast(&rhs[0]);
+	// Get pointers to the cusp arrays
+	float *d_S = thrust::raw_pointer_cast(&S[0]);
+	float *d_rhs = thrust::raw_pointer_cast(&rhs[0]);
 
-	// // Use the dipoles from the previous time step as the initial guess
-	// cudaMemcpy(d_S, d_dipole, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
-	// cudaMemcpy(d_rhs, d_Eq, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
+	// Use the dipoles from the previous time step as the initial guess
+	cudaMemcpy(d_S, d_dipole, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
+	cudaMemcpy(d_rhs, d_Eq, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
 
-	// // Set the preconditioner (identity for now)
-	// //cusp::identity_operator<float, cusp::device_memory> Pr(M.num_rows,M.num_rows);
+	// Set the preconditioner (identity for now)
+	//cusp::identity_operator<float, cusp::device_memory> Pr(M.num_rows,M.num_rows);
 
-	// // Solve the linear system M_ES * S = E0 - M_Eq * q using GMRES
-	// cusp::default_monitor<float> monitor(rhs, 100, errortol);
-	// int restart = 10;
-	// cusp::krylov::gmres(M, S, rhs, restart, monitor);
+	// Solve the linear system M_ES * S = E0 - M_Eq * q using GMRES
+	cusp::default_monitor<float> monitor(rhs, 100, errortol);
+	int restart = 10;
+	cusp::krylov::gmres(M, S, rhs, restart, monitor);
 
-	// // Store the computed dipoles to the correct place in device memory
-	// cudaMemcpy(d_dipole, d_S, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
+	// Store the computed dipoles to the correct place in device memory
+	cudaMemcpy(d_dipole, d_S, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
 
     gpuErrchk(cudaPeekAtLastError());
     return cudaSuccess;
@@ -1704,7 +1707,7 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 
 	// Compute the particle dipoles. If constantdipoleflag = 1, this step is skipped and the particles keep their constant dipole model values that were precomputed on the host.
 	if (dipoleflag == 0) {
-		ComputeDipole(d_pos, d_group_membership_tag, d_group_members, group_size, box, block_size, d_charge, 
+		ComputeDipole(d_pos, d_group_membership_tag, Ntotal, d_group_members, d_tag, d_group_tag, group_size, box, block_size, d_charge, 
 			      d_conductivity, d_dipole, extfield, d_Eq, xi, eta, rc, drtable, Ntable, d_phiS_table, 
 			      d_ES_table, d_gridk, d_scale_phiS, d_scale_ES, d_phiq_grid, d_ES_gridX, d_ES_gridY, 
 			      d_ES_gridZ, plan, Nx, Ny, Nz, d_n_neigh, d_nlist, d_head_list, P, gridh, errortol);
