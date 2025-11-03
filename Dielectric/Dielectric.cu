@@ -1586,7 +1586,7 @@ cudaError_t ComputeDipole(	Scalar4 *d_pos, // particle posisitons
 	cudaMemcpy(d_rhs, d_Eq, 3*group_size*sizeof(float), cudaMemcpyDeviceToDevice);
 
 	// Set the preconditioner (identity for now)
-	//cusp::identity_operator<float, cusp::device_memory> Pr(M.num_rows,M.num_rows);
+	cusp::identity_operator<float, cusp::device_memory> Pr(M.num_rows,M.num_rows);
 
 	// Solve the linear system M_ES * S = E0 - M_Eq * q using GMRES
 	cusp::default_monitor<float> monitor(rhs, 100, errortol);
