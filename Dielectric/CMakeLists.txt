@@ -17,13 +17,13 @@ endif (ENABLE_CUDA)
 
 pybind11_add_module (_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} ${_CUDA_GENERATED_FILES} NO_EXTRAS)
 if (APPLE)
-set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path")
+set_target_properties(_${COMPONENT_NAME} PROPERTIES BUILD_RPATH "@loader_path/..;@loader_path" INSTALL_RPATH "@loader_path/..;@loader_path")
 else()
-set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
+set_target_properties(_${COMPONENT_NAME} PROPERTIES BUILD_RPATH "@loader_path/..;@loader_path" INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
 endif()
 
 # Find additional libraries to be linked for the plugin
-find_library( AMGXSH_LIBRARY libamgxsh.so)
+find_library( AMGXSH_LIBRARY NAMES amgxsh amgx libamgxsh.so)
 if( NOT AMGXSH_LIBRARY )
         message(FATAL_ERROR "amgxsh library not found")
 endif( NOT AMGXSH_LIBRARY )
