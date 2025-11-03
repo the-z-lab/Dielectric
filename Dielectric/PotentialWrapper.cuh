@@ -1,3 +1,5 @@
+#define CUSP_USE_DEVICE_MALLOC
+
 #include "Dielectric.cuh"
 #include <stdio.h>
 #include <cusp/linear_operator.h>
@@ -89,37 +91,38 @@ public:
 		  const unsigned int *d_head_list,
                   Scalar3 gridh,
                   int P)
-                  : super(3*group_size,3*group_size), 
-		  d_pos(d_pos),
-		  d_group_membership_tag(d_group_membership_tag),
-          Ntotal(Ntotal),
-		  d_group_members(d_group_members),
-          d_tag(d_tag),
-          d_group_tag(d_group_tag),
-    		  group_size(group_size),
-		  box(box),
-          block_size(block_size),
-		  d_conductivity(d_conductivity),
-		  xi(xi),
-                  eta(eta),
-                  rc(rc),
-                  drtable(drtable),
-                  Ntable(Ntable),
-		  d_ES_table(d_ES_table),
-		  d_gridk(d_gridk),
-		  d_scale_ES(d_scale_ES),
-		  d_SgridX(d_SgridX),
-		  d_SgridY(d_SgridY),
-		  d_SgridZ(d_SgridZ),
-                  plan(plan),
-                  Nx(Nx),
-                  Ny(Ny),
-                  Nz(Nz),
-		  d_n_neigh(d_n_neigh),
-		  d_nlist(d_nlist),
-		  d_head_list(d_head_list),
-                  gridh(gridh),
-                  P(P){}
+                  : super(3*group_size, 3*group_size)
+                , group_size(group_size)
+                , Ntotal(Ntotal)
+                , xi(xi)
+                , eta(eta)
+                , rc(rc)
+                , drtable(drtable)
+                , Ntable(Ntable)
+                , box(box)
+                , Nx(Nx)
+                , Ny(Ny)
+                , Nz(Nz)
+                , gridh(gridh)
+                , P(P)
+                , plan(plan)
+                , block_size(block_size)
+                , d_pos(d_pos)
+                , d_conductivity(d_conductivity)
+                , d_group_membership_tag(d_group_membership_tag)
+                , d_group_members(d_group_members)
+                , d_tag(d_tag)
+                , d_group_tag(d_group_tag)
+                , d_n_neigh(d_n_neigh)
+                , d_nlist(d_nlist)
+                , d_head_list(d_head_list)
+                , d_ES_table(d_ES_table)
+                , d_gridk(d_gridk)
+                , d_scale_ES(d_scale_ES)
+                , d_SgridX(d_SgridX)
+                , d_SgridY(d_SgridY)
+                , d_SgridZ(d_SgridZ)
+                {}
 
 
     // linear operator y = A*x
