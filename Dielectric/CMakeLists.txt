@@ -32,7 +32,7 @@ message(STATUS  "Found amgxsh library: ${AMGXSH_LIBRARY}")
 set( AMGX_LIBRARIES ${AMGXSH_LIBRARY} )
 
 # link the library to its dependencies
-target_link_libraries(_${COMPONENT_NAME} PRIVATE ${HOOMD_LIBRARIES})
+target_link_libraries(_${COMPONENT_NAME} PRIVATE ${HOOMD_LIBRARIES} ${AMGX_LIBRARIES})
 
 # if we are compiling with MPI support built in, set appropriate
 # compiler/linker flags
