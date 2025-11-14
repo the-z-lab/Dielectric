@@ -795,7 +795,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 				int Ny, // number of grid nodes in y dimension
 				int Nz, // number of grid nodes in z dimension
 				unsigned int *d_group_members, // pointer to array of particles belonging to the group
-				unsigned int *d_rtag, 
+				unsigned int *d_tag, 
 				int *d_group_tag, 
 				BoxDim box, // simulation box
 				const int P, // number of nodes to spread the particle dipole over
@@ -816,7 +816,7 @@ __global__ void contract_force(	Scalar4 *d_pos,  // particle positions
 
 	// Global particle ID
     unsigned int idx = d_group_members[group_idx];
-	unsigned int tag = d_rtag[idx];
+	unsigned int tag = d_tag[idx];
 	int group_tag = d_group_tag[tag];
 
 	// Initialize the shared memory and have the first thread fetch the particle position and store it in shared memory
@@ -1647,8 +1647,8 @@ cudaError_t gpu_ComputeForce(   Scalar4 *d_pos, // particle posisitons
 				int P, // number of grid nodes over which to spread and contract
 				Scalar3 gridh, // grid spacing
 				Scalar errortol, // error tolerance
-				int dipoleflag,
-				unsigned int *d_tag) // indicates whether or not to turn off the mutual dipole functionality
+				int dipoleflag, // indicates whether or not to turn off the mutual dipole functionality
+				unsigned int *d_tag) 
 {
 
 	// total number of grid nodes
