@@ -494,7 +494,7 @@ void Dielectric::SetParams() {
 	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::read);
 
 	// Initialize array for the right side of the linear solve, E0 - M_Eq*q
-	GPUArray<Scalar3> n_Eq(m_group_size, m_exec_conf);
+	GPUArray<Scalar3> n_Eq(m_Ntotal, m_exec_conf);
 	m_Eq.swap(n_Eq);
 
 	// Fill the dipole array

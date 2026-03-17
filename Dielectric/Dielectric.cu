@@ -928,9 +928,11 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 
 		// Global ID of current particle
 		unsigned int idx = d_group_members[group_idx];
+		unsigned int tag = d_tag[idx];
+		int group_tag = d_group_tag[tag];
 
 		// Get the wave space contribution to E0 - M_Eq * q
-  		Scalar3 Eq = d_Eq[group_idx];
+  		Scalar3 Eq = d_Eq[group_tag];
 
 		// Number of neighbors and location of neighbors in neighbor list for current particle
 		unsigned int n_neigh = d_n_neigh[idx];
@@ -989,7 +991,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 		}// end neighbor loop
 
 		// Subtract the result from the external field and write to the current particle's position in the output array
-		d_Eq[group_idx] = E0 - Eq;
+		d_Eq[group_tag] = E0 - Eq;
 
 	}
 }
@@ -1026,7 +1028,7 @@ __global__ void real_space_field_dipole( 	Scalar4 *d_pos, // particle positions 
 		int group_tag = d_group_tag[tag];
 
 		// Get the wave space contribution to M_ES * S
-  		Scalar3 ES = d_ES[group_tag];
+  		Scalar3 ES = d_ES[group_tag]; // d_ES in the size of m_Ntable, should be tag or idx?
 
 		// Dipole moment and conductivity of current particle
 		Scalar3 Si = d_dipole[group_tag];
