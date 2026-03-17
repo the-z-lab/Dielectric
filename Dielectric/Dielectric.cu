@@ -915,6 +915,7 @@ __global__ void real_space_field_charge( 	Scalar4 *d_pos, // particle positions 
 					int *d_group_membership_tag, // particle membership and index in group
 					unsigned int *d_group_members, // pointer to array of particles belonging to the group
 					unsigned int *d_tag, 
+					int *d_group_tag,
 					BoxDim box, // simulation box
 					const unsigned int *d_n_neigh, // pointer to the number of neighbors of each particle 
 					const unsigned int *d_nlist, // pointer to the neighbor list 
@@ -1426,7 +1427,7 @@ cudaError_t FieldChargeMultiply(       Scalar4 *d_pos, // particle posisitons
 	gpuErrchk(cudaPeekAtLastError());
 
 	// Compute the real space contribution to the field
-    	real_space_field_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, extfield, d_Eq, group_size, d_phiS_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, d_tag, box, d_n_neigh, d_nlist, d_head_list); 
+    	real_space_field_charge<<<Nblocks3, Nthreads3>>>(d_pos, d_charge, extfield, d_Eq, group_size, d_phiS_table, rc, Ntable, drtable, d_group_membership_tag, d_group_members, d_tag, d_group_tag, box, d_n_neigh, d_nlist, d_head_list); 
 
     	gpuErrchk(cudaPeekAtLastError());
     	return cudaSuccess;
