@@ -761,13 +761,13 @@ void Dielectric::OutputData(unsigned int timestep) {
 
 		// Get the particle's active group-specific index
 		int group_tag = h_group_tag.data[i];
-		printf("OutputData [Dipole]: i = %d, group_tag = h_group_tag.data[i] = %d \n", i, group_tag);
+		//printf("OutputData [Dipole]: i = %d, group_tag = h_group_tag.data[i] = %d \n", i, group_tag);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
 		Scalar3 dipole;
 		if (group_idx != -1) {
 			dipole = h_dipole.data[group_tag];
-			printf("OutputData [Dipole] : group_tag = %d, dipole = h_dipole.data[group_tag] = (%f, %f, %f)\n", group_tag, dipole.x, dipole.y, dipole.z);
+			//printf("OutputData [Dipole] : group_tag = %d, dipole = h_dipole.data[group_tag] = (%f, %f, %f)\n", group_tag, dipole.x, dipole.y, dipole.z);
 		} else {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
