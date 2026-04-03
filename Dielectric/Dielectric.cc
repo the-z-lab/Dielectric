@@ -176,7 +176,7 @@ void Dielectric::SetParams() {
 	// Print summary to command line output
 	printf("\n");
 	printf("\n");
-	m_exec_conf->msg->notice(2) << "--- ?????? Parameters ---" << std::endl;
+	m_exec_conf->msg->notice(2) << "--- Parameters ---" << std::endl;
 	m_exec_conf->msg->notice(2) << "Active group size: " << m_group_size << std::endl;
 	m_exec_conf->msg->notice(2) << "Box dimensions: " << L.x << ", " << L.y << ", " << L.z << std::endl;
 	m_exec_conf->msg->notice(2) << "Ewald parameter xi: " << m_xi << std::endl;
