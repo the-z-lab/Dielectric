@@ -152,7 +152,7 @@ run(N_rand)
 
     # tag array (size Ntotal=8): [0, 1, 2, 3, 4, 5, 6, 7]
     # type array (size Ntotal=8): [A1, A1, A2, B, A2, B, A1, A2]
-    # group_tag array (size Ntotal=8): [0, 1, 2, -1, 4, -1, 6, 7] (Set group_tag=-1 for non-active particles; for active particles, group_tag=tag)
+    # group_tag array (size Ntotal=8): [0, 1, 2, -1, 3, -1, 4, 5] (Set group_tag=-1 for non-active particles; for active particles, group_tag=tag)
     # conductivity arrray (active group size group_size=6): [0, 0, 4, 4, 0, 4]
 
     # The particle order of tag, group_tag, conductivity should align with each other.
