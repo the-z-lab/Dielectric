@@ -1,13 +1,4 @@
 #!/bin/bash
-#SBATCH -J install
-#SBATCH -A zeelab
-#SBATCH -p ckpt
-#SBATCH -G 1
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --time 00:30:00
-#SBATCH --mem=30GB
-#SBATCH -o install.%j.out
 
 # Load necessary Hyak modules
 module load ssmc/miniconda/3.9

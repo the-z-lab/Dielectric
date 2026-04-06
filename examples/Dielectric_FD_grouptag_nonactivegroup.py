@@ -3,11 +3,8 @@ import hoomd
 import hoomd.md
 import hoomd.Dielectric
 
-import gsd.hoomd
-import argparse
 import numpy as np
 from datetime import datetime
-import os
 
 # Quantities to be specified.
 dt = 1e-3  # time step
@@ -131,12 +128,12 @@ run(N_rand)
 # For a non-active particleL: group_tag = -1; not included in the conductivity array
 
 # The logic behind:
-    # unsigned int idx = d_group_members[group_idx]
-    # unsigned int tag = d_tag[idx]
-    # int group_tag = d_group_tag[tag]
+    # unsigned int idx = d_group_members[group_idx] -> looping through group_idx (make sure all particles are in the active group), getting the hoomd idx from group_idx 
+    # unsigned int tag = d_tag[idx] -> getting particle tag from idx
+    # int group_tag = d_group_tag[tag] -> getting group_tag from tag
 
     # For a specific particle in the active group, we are getting its charge and conductivity from: 
-    # charge[idx], dipole[group_tag]
+    # charge[idx], dipole[group_tag] -> getting particle charge from charge and dipole array (user input)
 
 # Example: 
     # For a system with in total 8 particles (Ntotal=8)

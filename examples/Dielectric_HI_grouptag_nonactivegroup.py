@@ -2,7 +2,7 @@ from hoomd import *
 import hoomd
 import hoomd.md
 import hoomd.Dielectric
-import hoomd_PSEv1
+import hoomd.PSEv1
 
 import numpy as np
 from datetime import datetime
@@ -114,14 +114,6 @@ table_hs_HI.pair_coeff.set('pos','nonactive',func=hs_potential_BD,rmin=0.,rmax=d
 table_hs_HI.pair_coeff.set('neg','nonactive',func=hs_potential_BD,rmin=0.,rmax=diameter,coeff=dict(k=0,req=diameter))
 table_hs_HI.pair_coeff.set('nonactive','nonactive',func=hs_potential_BD,rmin=0.,rmax=diameter,coeff=dict(k=0,req=diameter))
 
-# Establish Brownian dynamics integrator.
-all = group.all()
-hoomd.md.integrate.mode_standard(dt=dt)
-bd = hoomd.md.integrate.brownian(group=all, kT=T, seed=datetime.now().microsecond)
-bd.set_gamma('pos', gamma=gamma)
-bd.set_gamma('neg', gamma=gamma)
-bd.set_gamma('nonactive', gamma=gamma)
-
 # Establish PSE integrator.
 all = group.all()
 groupPOS = group.type(name='pos', type='pos')
@@ -129,6 +121,7 @@ groupNEG = group.type(name='neg', type='neg')
 groupACTIVE = group.union(name="active", a=groupPOS, b=groupNEG)
 N_active = len(groupACTIVE)
 
+# Need the new PSE plugin for active particle group subsect
 hoomd.md.integrate.mode_standard(dt=dt)
 pse = hoomd.PSEv1.integrate.PSEv1(group=groupACTIVE, seed=datetime.now().microsecond, T=T, xi=xi, error=error)
 
@@ -145,12 +138,12 @@ run(N_rand)
 # For a non-active particleL: group_tag = -1; not included in the conductivity array
 
 # The logic behind:
-    # unsigned int idx = d_group_members[group_idx]
-    # unsigned int tag = d_tag[idx]
-    # int group_tag = d_group_tag[tag]
+    # unsigned int idx = d_group_members[group_idx] -> looping through group_idx (make sure all particles are in the active group), getting the hoomd idx from group_idx 
+    # unsigned int tag = d_tag[idx] -> getting particle tag from idx
+    # int group_tag = d_group_tag[tag] -> getting group_tag from tag
 
     # For a specific particle in the active group, we are getting its charge and conductivity from: 
-    # charge[idx], dipole[group_tag]
+    # charge[idx], dipole[group_tag] -> getting particle charge from charge and dipole array (user input)
 
 # Example: 
     # For a system with in total 8 particles (Ntotal=8)
