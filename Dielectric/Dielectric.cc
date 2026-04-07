@@ -3,8 +3,8 @@
 #pragma warning( disable : 4244 )
 #endif
 
-#include "Dielectric2.h"
-#include "Dielectric2.cuh"
+#include "Dielectric.h"
+#include "Dielectric.cuh"
 #include "PotentialWrapper.cuh"
 #include <stdio.h>
 #include <algorithm>
@@ -15,10 +15,11 @@
 
 using namespace std;
 
-// Constructor for the Dielectric2 class
-Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system this method will act on; must not be NULL
+// Constructor for the Dielectric class
+Dielectric::Dielectric( std::shared_ptr<SystemDefinition> sysdef, // system this method will act on; must not be NULL
 			  std::shared_ptr<ParticleGroup> group, // group of particles for which to compute the force
 			  std::shared_ptr<NeighborList> nlist, // neighbor list
+			  std::vector<int> &group_tag,
 			  std::vector<float> &conductivity, // particle conductivities
 			  std::vector<float> &field, // imposed external field
 			  std::vector<float> &gradient, // imposed external field gradient
@@ -38,13 +39,13 @@ Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system th
 			  m_dipoleflag(dipoleflag),
 			  m_t0(t0)
 {
-    m_exec_conf->msg->notice(5) << "Constructing Dielectric2" << std::endl;
+    m_exec_conf->msg->notice(5) << "Constructing Dielectric" << std::endl;
 
 	// only one GPU is supported
 	if (!m_exec_conf->isCUDAEnabled())
 	{
-		m_exec_conf->msg->error() << "Creating a Dielectric2 when CUDA is disabled" << std::endl;
-		throw std::runtime_error("Error initializing Dielectric2");
+		m_exec_conf->msg->error() << "Creating a Dielectric when CUDA is disabled" << std::endl;
+		throw std::runtime_error("Error initializing Dielectric");
 	}
 
 	// Set the field and field gradient
@@ -53,7 +54,19 @@ Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system th
 
 	// Get the group size and total number of particles
 	m_group_size = m_group->getNumMembers();
+	assert(m_group_size <= m_pdata->getN());
+	if (m_group_size == 0)
+		return;
 	m_Ntotal = m_pdata->getN();
+	//m_Ntags = m_pdata->getNGlobal();
+
+	// group_tag
+	GPUArray<int> n_group_tag(m_Ntotal, m_exec_conf);
+	m_group_tag.swap(n_group_tag);
+	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::readwrite);
+	for (unsigned int i = 0; i < m_Ntotal; ++i ){
+		h_group_tag.data[i] = group_tag[i];
+	}
 	
 	// Extract the particle conductivities
 	GPUArray<Scalar> n_conductivity(m_group_size, m_exec_conf);
@@ -65,16 +78,16 @@ Dielectric2::Dielectric2( std::shared_ptr<SystemDefinition> sysdef, // system th
 
 }
 
-// Destructor for the Dielectric2 class
-Dielectric2::~Dielectric2() {
+// Destructor for the Dielectric class
+Dielectric::~Dielectric() {
 
-    m_exec_conf->msg->notice(5) << "Destroying Dielectric2" << std::endl;
+    m_exec_conf->msg->notice(5) << "Destroying Dielectric" << std::endl;
 	cufftDestroy(m_plan);
 }
 
 // Compute and set parameters needed for the calculations.  This step is computed only once when the
-// Dielectric2 class is created or on each call to update_parameters if system parameters change.
-void Dielectric2::SetParams() {
+// Dielectric class is created or on each call to update_parameters if system parameters change.
+void Dielectric::SetParams() {
 
 	////// Compute parameters associated with the numerical method.
 
@@ -187,7 +200,7 @@ void Dielectric2::SetParams() {
 	m_gridk.swap(n_gridk);
 	ArrayHandle<Scalar3> h_gridk(m_gridk, access_location::host, access_mode::readwrite);
 
-	// Initialize arrays for the Wave space scalings
+	// Initialize arrays for the wave space scalings
 	GPUArray<Scalar> n_scale_phiq(Ngrid, m_exec_conf);
 	GPUArray<Scalar> n_scale_phiS(Ngrid, m_exec_conf);
 	GPUArray<Scalar> n_scale_ES(Ngrid, m_exec_conf);
@@ -467,8 +480,8 @@ void Dielectric2::SetParams() {
 	////// Initializations for needed arrays
 
 	// Group membership list
-	GPUArray<int> n_group_membership(m_Ntotal, m_exec_conf);
-	m_group_membership.swap(n_group_membership);
+	GPUArray<int> n_group_membership_tag(m_Ntotal, m_exec_conf);
+	m_group_membership_tag.swap(n_group_membership_tag);
 
 	// Particle dipoles
 	GPUArray<Scalar3> n_dipole(m_group_size, m_exec_conf);
@@ -477,6 +490,8 @@ void Dielectric2::SetParams() {
 
 	// Get access to particle conductivities
 	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::read);
+
+	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::read);
 
 	// Initialize array for the right side of the linear solve, E0 - M_Eq*q
 	GPUArray<Scalar3> n_Eq(m_group_size, m_exec_conf);
@@ -501,7 +516,7 @@ void Dielectric2::SetParams() {
 }
 
 // Update the applied external field and gradient.  Does not require recomputing tables on the CPU.
-void Dielectric2::UpdateField(std::vector<float> &field,
+void Dielectric::UpdateField(std::vector<float> &field,
 			     std::vector<float> &gradient)
 {
 
@@ -531,16 +546,18 @@ void Dielectric2::UpdateField(std::vector<float> &field,
 }
 
 // Update simulation parameters.  Recomputes tables on the CPU.
-void Dielectric2::UpdateParameters(std::vector<float> &field,
-				   std::vector<float> &gradient,
-		      		   std::vector<float> &conductivity,
-		      		   std::string fileprefix,
-		      		   int period,
-				   int dipoleflag,
-		      		   unsigned int t0) 
+void Dielectric::UpdateParameters(std::vector<int> &group_tag,
+					std::vector<float> &field,
+				    std::vector<float> &gradient,
+		      		std::vector<float> &conductivity,
+		      		std::string fileprefix,
+		      		int period,
+				    int dipoleflag,
+		      		unsigned int t0) 
 {
 
 	// Extract inputs
+	//m_group_tag = group_tag;
 	m_field = make_scalar3(field[0], field[1], field[2]);
 	m_gradient = make_scalar3(gradient[0], gradient[1], gradient[2]);
 	m_fileprefix = fileprefix;
@@ -549,6 +566,7 @@ void Dielectric2::UpdateParameters(std::vector<float> &field,
 	m_t0 = t0;
 
 	// Get access to particle conductivity and dipole arrays
+	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::readwrite);
 	ArrayHandle<Scalar> h_conductivity(m_conductivity, access_location::host, access_mode::readwrite);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::readwrite);
 
@@ -574,7 +592,7 @@ void Dielectric2::UpdateParameters(std::vector<float> &field,
 
 
 // Compute forces on particles
-void Dielectric2::computeForces(unsigned int timestep) {
+void Dielectric::computeForces(unsigned int timestep) {
 
 	// access the particle forces (associated with this plugin only; other forces are stored elsewhere)
 	ArrayHandle<Scalar4> d_force(m_force, access_location::device, access_mode::overwrite);
@@ -604,10 +622,16 @@ void Dielectric2::computeForces(unsigned int timestep) {
 	ArrayHandle<Scalar3> d_dipole(m_dipole, access_location::device, access_mode::readwrite);
 
 	// active group indices
-	ArrayHandle<int> d_group_membership(m_group_membership, access_location::device, access_mode::readwrite);
+	ArrayHandle<int> d_group_membership_tag(m_group_membership_tag, access_location::device, access_mode::readwrite);
+
+	// tag
+	ArrayHandle<unsigned int> d_tag(m_pdata->getTags(), access_location::device, access_mode::read);
 
 	// particles in the active group
 	ArrayHandle<unsigned int> d_group_members(m_group->getIndexArray(), access_location::device, access_mode::read);
+
+	// group_tag
+	ArrayHandle<int> d_group_tag(m_group_tag, access_location::device, access_mode::read);
 
 	// simulation box
 	BoxDim box = m_pdata->getBox();
@@ -654,16 +678,16 @@ void Dielectric2::computeForces(unsigned int timestep) {
 
 	// perform the calculation on the GPU
 	if (m_dipoleflag != 2) {
-		gpu_ComputeForce(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, d_group_tag.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				 d_conductivity.data, d_dipole.data, m_field, m_gradient, d_Eq.data, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_phiS_table.data, 
 				 d_ES_table.data, d_gradphiq_table.data, d_gradphiS_table.data, d_gradES_table.data, d_gridk.data, d_scale_phiq.data, d_scale_phiS.data, 
 				 d_scale_ES.data ,d_phiq_grid.data, d_phiS_grid.data, d_Eq_gridX.data, d_Eq_gridY.data, d_Eq_gridZ.data, d_ES_gridX.data,
 				 d_ES_gridY.data, d_ES_gridZ.data, m_plan, m_Nx, m_Ny, m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, 
-				 m_dipoleflag);
+				 m_dipoleflag, d_tag.data);
 	} else {
-		gpu_ComputeForce_Charge(d_pos.data, d_group_membership.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
+		gpu_ComputeForce_Charge(d_pos.data, d_group_membership_tag.data, m_Ntotal, d_group_members.data, m_group_size, box, block_size, d_force.data, d_charge.data, 
 				  	m_field, m_xi, m_eta, m_rc, m_drtable, m_Ntable, d_gradphiq_table.data, d_scale_phiq.data, d_phiq_grid.data, m_plan, m_Nx, m_Ny,
-					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol);
+					m_Nz, d_n_neigh.data, d_nlist.data, d_head_list.data, m_P, m_gridh, m_errortol, d_tag.data);
 	}
 
 	if (m_exec_conf->isCUDAErrorCheckingEnabled())
@@ -680,7 +704,7 @@ void Dielectric2::computeForces(unsigned int timestep) {
 }
 
 // Write quantities to file
-void Dielectric2::OutputData(unsigned int timestep) {
+void Dielectric::OutputData(unsigned int timestep) {
 
 	// Format the timestep to a string
 	std::ostringstream timestep_str;
@@ -691,10 +715,12 @@ void Dielectric2::OutputData(unsigned int timestep) {
 
 	// Access needed data
 	ArrayHandle<unsigned int> h_rtag(m_pdata->getRTags(), access_location::host, access_mode::read);
+	ArrayHandle<unsigned int> h_tag(m_pdata->getTags(), access_location::host, access_mode::read);
 	ArrayHandle<Scalar4> h_pos(m_pdata->getPositions(), access_location::host, access_mode::read);
 	ArrayHandle<Scalar3> h_dipole(m_dipole, access_location::host, access_mode::read);
 	ArrayHandle<Scalar4> h_force(m_force, access_location::host, access_mode::read);
-	ArrayHandle<int> h_group_membership(m_group_membership, access_location::host, access_mode::read);
+	ArrayHandle<int> h_group_membership_tag(m_group_membership_tag, access_location::host, access_mode::read);
+	ArrayHandle<int> h_group_tag(m_group_tag, access_location::host, access_mode::read);
 
 	// Open the file
 	std::ofstream file;
@@ -702,47 +728,54 @@ void Dielectric2::OutputData(unsigned int timestep) {
 
 	// Check that the file opened correctly
         if (!file.good()) {
-                throw std::runtime_error("Error in Dielectric2: unable to open output file.");
+                throw std::runtime_error("Error in Dielectric: unable to open output file.");
         }
 
 	////// Write the particle positions to file in global tag order
 
 	// Header
-	file << "Position" << std::endl;
+	file << "Position_x Position_y Position_z i idx" << std::endl;
 
 	// Loop through particle tags
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
-		unsigned int idx = h_rtag.data[i];
+		unsigned int idx = h_rtag.data[i];  // idx = h_rtag.data[tag]
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's position
-		Scalar4 postype = h_pos.data[idx];
+		Scalar4 postype = h_pos.data[idx]; // idx
 
 		// Write the position to file
-		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << std::endl;
+		file << std::setprecision(10) << postype.x << "  " << postype.y << "  " << postype.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 	////// Write the particle dipoles to file in global tag order
-	file << "Dipole" << std::endl;
+	file << "Dipole_x  Dipole_y  Dipole_z  i  group_tag" << std::endl;
 	for (int i = 0; i < m_Ntotal; i++) {
 
 		// Get the particle's global index
 		unsigned int idx = h_rtag.data[i];
+		unsigned int group_idx = h_group_membership_tag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's active group-specific index
-		int group_idx = h_group_membership.data[idx];
+		int group_tag = h_group_tag.data[i];
+		//printf("OutputData [Dipole]: i = %d, group_tag = h_group_tag.data[i] = %d \n", i, group_tag);
 
 		// Get the particle's dipole if it is in the active group.  Else, set the dipole to 0.
 		Scalar3 dipole;
 		if (group_idx != -1) {
-			dipole = h_dipole.data[group_idx];
+			dipole = h_dipole.data[group_tag];
+			//printf("OutputData [Dipole] : group_tag = %d, dipole = h_dipole.data[group_tag] = (%f, %f, %f)\n", group_tag, dipole.x, dipole.y, dipole.z);
 		} else {
 			dipole = make_scalar3(0.0, 0.0, 0.0);
 		}
 
-		// Write the dipole to file
-		file << std::setprecision(10) << dipole.x << "  " << dipole.y << "  " << dipole.z << "  " << std::endl;
+		// Write the dipole, idx, and group_idx to file
+		file << std::setprecision(10)
+			<< dipole.x << "  " << dipole.y << "  " << dipole.z << "  "
+			<< i << "  " << group_tag << std::endl;
 	}
 
 	////// Write the particle electric/magnetic forces to file in global tag order
@@ -751,12 +784,13 @@ void Dielectric2::OutputData(unsigned int timestep) {
 
 		// Get the particle's global index
 		unsigned int idx = h_rtag.data[i];
+		if (idx >= m_Ntotal) continue;
 
 		// Get the particle's electric/magnetic force
-		Scalar4 force = h_force.data[idx];
+		Scalar4 force = h_force.data[idx]; // idx
 
 		// Write the dipole to file
-		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << std::endl;
+		file << std::setprecision(10) << force.x << "  " << force.y << "  " << force.z << "  " << i << "  " << idx << "  " << std::endl;
 	}
 
 
@@ -764,15 +798,15 @@ void Dielectric2::OutputData(unsigned int timestep) {
 	file.close();
 }
 
-void export_Dielectric2(pybind11::module& m)
+void export_Dielectric(pybind11::module& m)
 {
-    pybind11::class_<Dielectric2, std::shared_ptr<Dielectric2>> (m, "Dielectric2", pybind11::base<ForceCompute>())
-		.def(pybind11::init< std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>, std::shared_ptr<NeighborList>, std::vector<float>&, std::vector<float>&, std::vector<float>&, Scalar, Scalar, std::string, int, int, unsigned int >())
-		.def("SetParams", &Dielectric2::SetParams)
-		.def("UpdateField", &Dielectric2::UpdateField)
-		.def("UpdateParameters", &Dielectric2::UpdateParameters)
-		.def("computeForces", &Dielectric2::computeForces)
-		.def("OutputData", &Dielectric2::OutputData)
+    pybind11::class_<Dielectric, std::shared_ptr<Dielectric>> (m, "Dielectric", pybind11::base<ForceCompute>())
+		.def(pybind11::init< std::shared_ptr<SystemDefinition>, std::shared_ptr<ParticleGroup>, std::shared_ptr<NeighborList>, std::vector<int>&, std::vector<float>&, std::vector<float>&, std::vector<float>&, Scalar, Scalar, std::string, int, int, unsigned int >())
+		.def("SetParams", &Dielectric::SetParams)
+		.def("UpdateField", &Dielectric::UpdateField)
+		.def("UpdateParameters", &Dielectric::UpdateParameters)
+		.def("computeForces", &Dielectric::computeForces)
+		.def("OutputData", &Dielectric::OutputData)
         ;
 }
 

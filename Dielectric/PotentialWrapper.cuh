@@ -1,6 +1,7 @@
-#include "Dielectric2.cuh"
-#include <stdio.h>
+#define CUSP_USE_DEVICE_MALLOC
 
+#include "Dielectric.cuh"
+#include <stdio.h>
 #include <cusp/linear_operator.h>
 
 #ifdef WIN32
@@ -24,6 +25,7 @@ public:
     typedef cusp::linear_operator<float,cusp::device_memory> super; // Defines size of linear operator
   
     unsigned int group_size; // Number of particles
+    unsigned int Ntotal;
 
     Scalar xi;  // Ewald splitting parameter
     Scalar3 eta;  // Spectral splitting parameter
@@ -38,11 +40,14 @@ public:
     Scalar3 gridh;  // grid spacing
     int P;  // number of grid nodes in Gaussian support
     cufftHandle plan;  // plan for cuFFT
+    int block_size;  // number of threads to use per block
  
     Scalar4 *d_pos;  // particle positions and types
     Scalar *d_conductivity; // particle conductivity
-    int *d_group_membership; // particle membership and index in group for which the force calculation is being performed
+    int *d_group_membership_tag; // particle membership and index in group for which the force calculation is being performed
     unsigned int *d_group_members;  // index into particle tag
+    unsigned int *d_tag;
+    int *d_group_tag;
     const unsigned int *d_n_neigh;  // number of neighbors of each particle
     const unsigned int *d_nlist;    // neighbor list
     const unsigned int *d_head_list;  // used to access entries in the neighbor list
@@ -57,10 +62,14 @@ public:
 
     // constructor
     cuspPotential(Scalar4 *d_pos,
-		  int *d_group_membership,
+          int *d_group_membership_tag,
+          unsigned int Ntotal, 
 		  unsigned int *d_group_members,
+          unsigned int *d_tag, 
+          int *d_group_tag, 
 		  unsigned int group_size,
 		  const BoxDim& box,
+          int block_size,
 		  Scalar *d_conductivity,
 		  Scalar xi,
                   Scalar3 eta,
@@ -82,33 +91,38 @@ public:
 		  const unsigned int *d_head_list,
                   Scalar3 gridh,
                   int P)
-                  : super(3*group_size,3*group_size), 
-		  d_pos(d_pos),
-		  d_group_membership(d_group_membership),
-		  d_group_members(d_group_members),
-    		  group_size(group_size),
-		  box(box),
-		  d_conductivity(d_conductivity),
-		  xi(xi),
-                  eta(eta),
-                  rc(rc),
-                  drtable(drtable),
-                  Ntable(Ntable),
-		  d_ES_table(d_ES_table),
-		  d_gridk(d_gridk),
-		  d_scale_ES(d_scale_ES),
-		  d_SgridX(d_SgridX),
-		  d_SgridY(d_SgridY),
-		  d_SgridZ(d_SgridZ),
-                  plan(plan),
-                  Nx(Nx),
-                  Ny(Ny),
-                  Nz(Nz),
-		  d_n_neigh(d_n_neigh),
-		  d_nlist(d_nlist),
-		  d_head_list(d_head_list),
-                  gridh(gridh),
-                  P(P){}
+                  : super(3*group_size, 3*group_size)
+                , group_size(group_size)
+                , Ntotal(Ntotal)
+                , xi(xi)
+                , eta(eta)
+                , rc(rc)
+                , drtable(drtable)
+                , Ntable(Ntable)
+                , box(box)
+                , Nx(Nx)
+                , Ny(Ny)
+                , Nz(Nz)
+                , gridh(gridh)
+                , P(P)
+                , plan(plan)
+                , block_size(block_size)
+                , d_pos(d_pos)
+                , d_conductivity(d_conductivity)
+                , d_group_membership_tag(d_group_membership_tag)
+                , d_group_members(d_group_members)
+                , d_tag(d_tag)
+                , d_group_tag(d_group_tag)
+                , d_n_neigh(d_n_neigh)
+                , d_nlist(d_nlist)
+                , d_head_list(d_head_list)
+                , d_ES_table(d_ES_table)
+                , d_gridk(d_gridk)
+                , d_scale_ES(d_scale_ES)
+                , d_SgridX(d_SgridX)
+                , d_SgridY(d_SgridY)
+                , d_SgridZ(d_SgridZ)
+                {}
 
 
     // linear operator y = A*x
@@ -129,11 +143,14 @@ public:
 
         // run kernels to compute y = A*x
 	FieldDipoleMultiply(	d_pos,
-			d_group_membership,
+			d_group_membership_tag,
+            Ntotal,
 			d_group_members,
+            d_tag,
+            d_group_tag,
 			group_size,
 			box,
-			512, // blocksize
+			block_size,
 			x_ptr2,
 			d_conductivity,
 			y_ptr2,

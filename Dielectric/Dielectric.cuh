@@ -3,8 +3,8 @@
 #include "hoomd/Index1D.h"
 #include <cufft.h>
 
-#ifndef __DIELECTRIC2_CUH__
-#define __DIELECTRIC2_CUH__
+#ifndef __DIELECTRIC_CUH__
+#define __DIELECTRIC_CUH__
 
 #ifdef SINGLE_PRECISION
 #define CUFFTCOMPLEX cufftComplex
@@ -12,15 +12,16 @@
 #define CUFFTCOMPLEX cufftComplex
 #endif
 
-// Kernel driver for the calculations called by Dielectric2.cc
+// Kernel driver for the calculations called by Dielectric.cc
 cudaError_t gpu_ZeroForce(unsigned int Ntotal, // total number of particles
 			  Scalar4 *d_force, // pointer to the particle forces 
 			  unsigned int block_size); // number of threads per block
 
 cudaError_t gpu_ComputeForce(Scalar4 *d_pos, // particle positions and types
-			     int *d_group_membership, // particle membership and index in active group
+			     int *d_group_membership_tag, // particle membership and index in active group
 			     unsigned int Ntotal, // total number of particles
                              unsigned int *d_group_members, // particles in active group
+							 int *d_group_tag, 
                              unsigned int group_size, // number of particles in active group
                              const BoxDim& box, // simulation box
                              unsigned int block_size, // number of threads per block
@@ -58,15 +59,16 @@ cudaError_t gpu_ComputeForce(Scalar4 *d_pos, // particle positions and types
 			     const int Ny, // number of grid nodes in the y dimension
 			     const int Nz, // number of grid nodes in the z dimension
 			     const unsigned int *d_n_neigh, // number of neighbors of each particle
-                             const unsigned int *d_nlist, // neighbor list
-                             const unsigned int *d_head_list, // used to access entries in the neighbor list
+                 const unsigned int *d_nlist, // neighbor list
+                 const unsigned int *d_head_list, // used to access entries in the neighbor list
 			     int P, // number of grid nodes over which to spread and contract
 			     Scalar3 gridh, // grid spacing
 			     Scalar errortol, // error tolerance
-			     int dipoleflag);  // indicates whether to turn off the mutual dipole functionality or ignore dipoles all together
+			     int dipoleflag,  // indicates whether to turn off the mutual dipole functionality or ignore dipoles all together
+				 unsigned int *d_tag);
 
 cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and types
-			     int *d_group_membership, // particle membership and index in active group
+			     int *d_group_membership_tag, // particle membership and index in active group
 			     unsigned int Ntotal, // total number of particles
                              unsigned int *d_group_members, // particles in active group
                              unsigned int group_size, // number of particles in active group
@@ -92,12 +94,17 @@ cudaError_t gpu_ComputeForce_Charge(Scalar4 *d_pos, // particle positions and ty
                              const unsigned int *d_head_list, // used to access entries in the neighbor list
 			     int P, // number of grid nodes over which to spread and contract
 			     Scalar3 gridh, // grid spacing
-			     Scalar errortol); // error tolerance
+			     Scalar errortol, 
+				 //unsigned int *d_rtag, 
+				 unsigned int *d_tag); // error tolerance
 
 // Kernel called by PotentialWrapper.cuh
 cudaError_t FieldDipoleMultiply(Scalar4 *d_pos, // particle positions and types
-			 int *d_group_membership, // particle membership and index in active group
+			 int *d_group_membership_tag, // particle membership and index in active group
+			 unsigned int Ntotal, 
 			 unsigned int *d_group_members, // particles in active group
+			 unsigned int *d_tag,
+			 int *d_group_tag, 
 			 unsigned int group_size, // number of particles in active group
 			 const BoxDim& box, // simulation box
 			 unsigned int block_size, // number of threads to use per block

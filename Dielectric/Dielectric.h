@@ -10,24 +10,25 @@
 #define CUFFTCOMPLEX cufftComplex
 #endif
 
-#ifndef __DIELECTRIC2_H__
-#define __DIELECTRIC2_H__
+#ifndef __DIELECTRIC_H__
+#define __DIELECTRIC_H__
 
 #ifdef NVCC
 #error This header cannot be compiled by nvcc
 #endif
 
-// Declares the Dielectric2 class.
-class Dielectric2 : public ForceCompute {
+// Declares the Dielectric class.
+class Dielectric : public ForceCompute {
 
     public:
         // Constructs the compute and associates it with the system
-        Dielectric2(std::shared_ptr<SystemDefinition> sysdef,
+        Dielectric(std::shared_ptr<SystemDefinition> sysdef,
                     std::shared_ptr<ParticleGroup> group,
 	            std::shared_ptr<NeighborList> nlist,
+				std::vector<int> &group_tag, 
+				std::vector<float> &conductivity,
 		    std::vector<float> &field,
 		    std::vector<float> &gradient,
-		    std::vector<float> &conductivity,
 	            Scalar xi,
 		    Scalar errortol,
 		    std::string fileprefix,
@@ -36,7 +37,7 @@ class Dielectric2 : public ForceCompute {
 		    unsigned int t0);
 
 	// Destructor
-        virtual ~Dielectric2();
+        virtual ~Dielectric();
 
 	// Set parameters needed for the force calculation
 	void SetParams();
@@ -46,7 +47,8 @@ class Dielectric2 : public ForceCompute {
 			 std::vector<float> &gradient);
 
 	// Update simulation parameters
-	void UpdateParameters(std::vector<float> &field,
+	void UpdateParameters(std::vector<int> &group_tag,
+				  std::vector<float> &field,
 			      std::vector<float> &gradient,
 			      std::vector<float> &conductivity,
 			      std::string fileprefix,
@@ -70,7 +72,8 @@ class Dielectric2 : public ForceCompute {
 
 	int m_Ntotal;					// total number of particles
 	int m_group_size;				// number of particles in the active group
-	GPUArray<int> m_group_membership;		// active group membership list
+	GPUArray<int> m_group_membership_tag;		// active group membership list
+	GPUArray<int> m_group_tag;
 
 	Scalar m_xi;               			// Ewald splitting parameter
 	Scalar m_errortol;				// error tolerance
@@ -117,7 +120,7 @@ class Dielectric2 : public ForceCompute {
 
     };
 
-// Exports the Dielectric2 class to python
-void export_Dielectric2(pybind11::module& m);
+// Exports the Dielectric class to python
+void export_Dielectric(pybind11::module& m);
 
 #endif

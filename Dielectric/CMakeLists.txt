@@ -1,14 +1,14 @@
 # Maintainer: Zachary M. Sherman
 
-set(COMPONENT_NAME Dielectric2)
+set(COMPONENT_NAME Dielectric)
 
 set(_${COMPONENT_NAME}_sources
     module.cc
-    Dielectric2.cc
+    Dielectric.cc
     )
 
 set(_${COMPONENT_NAME}_cu_sources
-    Dielectric2.cu
+    Dielectric.cu
     )
 
 if (ENABLE_CUDA)
@@ -17,13 +17,22 @@ endif (ENABLE_CUDA)
 
 pybind11_add_module (_${COMPONENT_NAME} SHARED ${_${COMPONENT_NAME}_sources} ${_CUDA_GENERATED_FILES} NO_EXTRAS)
 if (APPLE)
-set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "@loader_path/..;@loader_path")
+set_target_properties(_${COMPONENT_NAME} PROPERTIES BUILD_RPATH "@loader_path/..;@loader_path" INSTALL_RPATH "@loader_path/..;@loader_path")
 else()
-set_target_properties(_${COMPONENT_NAME} PROPERTIES INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
+set_target_properties(_${COMPONENT_NAME} PROPERTIES BUILD_RPATH "@loader_path/..;@loader_path" INSTALL_RPATH "\$ORIGIN/..;\$ORIGIN")
 endif()
 
+# Find additional libraries to be linked for the plugin
+find_library( AMGXSH_LIBRARY NAMES amgxsh amgx libamgxsh.so)
+if( NOT AMGXSH_LIBRARY )
+        message(FATAL_ERROR "amgxsh library not found")
+endif( NOT AMGXSH_LIBRARY )
+message(STATUS  "Found amgxsh library: ${AMGXSH_LIBRARY}")
+
+set( AMGX_LIBRARIES ${AMGXSH_LIBRARY} )
+
 # link the library to its dependencies
-target_link_libraries(_${COMPONENT_NAME} PRIVATE ${HOOMD_LIBRARIES})
+target_link_libraries(_${COMPONENT_NAME} PRIVATE ${HOOMD_LIBRARIES} ${AMGX_LIBRARIES})
 
 # if we are compiling with MPI support built in, set appropriate
 # compiler/linker flags
